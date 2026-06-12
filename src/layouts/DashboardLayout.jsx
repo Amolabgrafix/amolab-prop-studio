@@ -40,6 +40,12 @@ export default function DashboardLayout() {
           <Link to="/admin/payments" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Payments
           </Link>
+          <Link to="/admin/enquiries" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
+            Enquiries
+          </Link>
+          <Link to="/admin/design-requests" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
+          Design Requests
+        </Link>
         </nav>
       </aside>
 

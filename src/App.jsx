@@ -5,31 +5,36 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 
 import DashboardLayout from "./layouts/DashboardLayout";
+
 import AdminDashboard from "./dashboard/admin/AdminDashboard";
 import AdminUsers from "./dashboard/admin/AdminUsers";
 import AdminProperties from "./dashboard/admin/AdminProperties";
 import AdminVerifications from "./dashboard/admin/AdminVerifications";
+import AdminEnquiries from "./dashboard/admin/AdminEnquiries";
 
 import AddProperty from "./dashboard/seller/AddProperty";
-import Properties from "./pages/Properties";
-import PropertyDetails from "./pages/PropertyDetails";
-
 import SellerDashboard from "./dashboard/seller/SellerDashboard";
 import SellerProperties from "./dashboard/seller/SellerProperties";
 import SellerVerification from "./dashboard/seller/SellerVerification";
+import SellerEnquiries from "./dashboard/seller/SellerEnquiries";
+
+import Properties from "./pages/Properties";
+import PropertyDetails from "./pages/PropertyDetails";
 import DashboardHome from "./dashboard/DashboardHome";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
-import SellerEnquiries from "./dashboard/seller/SellerEnquiries";
+import AdminDesignRequests from "./dashboard/admin/AdminDesignRequests";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Pages */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
+        {/* Admin Routes */}
         <Route path="/admin" element={<DashboardLayout />}>
           <Route
             path="dashboard"
@@ -66,19 +71,40 @@ function App() {
               </ProtectedAdminRoute>
             }
           />
+
+          <Route
+            path="enquiries"
+            element={
+              <ProtectedAdminRoute>
+                <AdminEnquiries />
+              </ProtectedAdminRoute>
+            }
+          />
+          <Route
+          path="design-requests"
+          element={
+            <ProtectedAdminRoute>
+              <AdminDesignRequests />
+            </ProtectedAdminRoute>
+          }
+/>
         </Route>
 
-        <Route path="/seller/add-property" element={<AddProperty />} />
+        {/* Seller Routes */}
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/seller/properties" element={<SellerProperties />} />
+        <Route path="/seller/add-property" element={<AddProperty />} />
         <Route path="/seller/verification" element={<SellerVerification />} />
+        <Route path="/seller/enquiries" element={<SellerEnquiries />} />
 
+        {/* Properties */}
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<PropertyDetails />} />
 
+        {/* User Dashboard */}
         <Route path="/dashboard" element={<DashboardHome />} />
-        <Route path="/seller/enquiries" element={<SellerEnquiries />} />
 
+        {/* 404 */}
         <Route
           path="*"
           element={
