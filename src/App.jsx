@@ -11,6 +11,8 @@ import AdminUsers from "./dashboard/admin/AdminUsers";
 import AdminProperties from "./dashboard/admin/AdminProperties";
 import AdminVerifications from "./dashboard/admin/AdminVerifications";
 import AdminEnquiries from "./dashboard/admin/AdminEnquiries";
+import AdminDesignRequests from "./dashboard/admin/AdminDesignRequests";
+import AdminPayments from "./dashboard/admin/AdminPayments";
 
 import AddProperty from "./dashboard/seller/AddProperty";
 import SellerDashboard from "./dashboard/seller/SellerDashboard";
@@ -23,7 +25,6 @@ import PropertyDetails from "./pages/PropertyDetails";
 import DashboardHome from "./dashboard/DashboardHome";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
-import AdminDesignRequests from "./dashboard/admin/AdminDesignRequests";
 
 function App() {
   return (
@@ -34,10 +35,24 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<DashboardLayout />}>
+        {/* Public Properties */}
+        <Route path="/properties" element={<Properties />} />
+        <Route path="/properties/:id" element={<PropertyDetails />} />
+
+        {/* General Dashboard */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+
+          {/* Seller Pages */}
+          <Route path="seller" element={<SellerDashboard />} />
+          <Route path="seller/properties" element={<SellerProperties />} />
+          <Route path="seller/add-property" element={<AddProperty />} />
+          <Route path="seller/verification" element={<SellerVerification />} />
+          <Route path="seller/enquiries" element={<SellerEnquiries />} />
+
+          {/* Admin Pages */}
           <Route
-            path="dashboard"
+            path="admin"
             element={
               <ProtectedAdminRoute>
                 <AdminDashboard />
@@ -46,7 +61,7 @@ function App() {
           />
 
           <Route
-            path="users"
+            path="admin/users"
             element={
               <ProtectedAdminRoute>
                 <AdminUsers />
@@ -55,7 +70,7 @@ function App() {
           />
 
           <Route
-            path="properties"
+            path="admin/properties"
             element={
               <ProtectedAdminRoute>
                 <AdminProperties />
@@ -64,7 +79,7 @@ function App() {
           />
 
           <Route
-            path="verifications"
+            path="admin/verifications"
             element={
               <ProtectedAdminRoute>
                 <AdminVerifications />
@@ -73,36 +88,34 @@ function App() {
           />
 
           <Route
-            path="enquiries"
+            path="admin/enquiries"
             element={
               <ProtectedAdminRoute>
                 <AdminEnquiries />
               </ProtectedAdminRoute>
             }
           />
+
           <Route
-          path="design-requests"
-          element={
-            <ProtectedAdminRoute>
-              <AdminDesignRequests />
-            </ProtectedAdminRoute>
-          }
-/>
+            path="admin/payments"
+            element={
+              <ProtectedAdminRoute>
+                <AdminPayments />
+              </ProtectedAdminRoute>
+            }
+          />
+
+          <Route
+            path="admin/design-requests"
+            element={
+              <ProtectedAdminRoute>
+                <AdminDesignRequests />
+              </ProtectedAdminRoute>
+            }
+          />
         </Route>
 
-        {/* Seller Routes */}
-        <Route path="/seller/dashboard" element={<SellerDashboard />} />
-        <Route path="/seller/properties" element={<SellerProperties />} />
-        <Route path="/seller/add-property" element={<AddProperty />} />
-        <Route path="/seller/verification" element={<SellerVerification />} />
-        <Route path="/seller/enquiries" element={<SellerEnquiries />} />
-
-        {/* Properties */}
-        <Route path="/properties" element={<Properties />} />
-        <Route path="/properties/:id" element={<PropertyDetails />} />
-
-        {/* User Dashboard */}
-        <Route path="/dashboard" element={<DashboardHome />} />
+        {/* Old routes redirect safety can be added later */}
 
         {/* 404 */}
         <Route
