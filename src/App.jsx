@@ -25,6 +25,7 @@ import PropertyDetails from "./pages/PropertyDetails";
 import DashboardHome from "./dashboard/DashboardHome";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
+import Favorites from "./dashboard/Favorites";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
         {/* General Dashboard */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
+          <Route path="favorites" element={<Favorites />} />
 
           {/* Seller Pages */}
           <Route path="seller" element={<SellerDashboard />} />

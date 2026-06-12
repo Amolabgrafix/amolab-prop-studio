@@ -5,6 +5,11 @@ export default function SellerVerification() {
   const [profile, setProfile] = useState(null);
   const [ninNumber, setNinNumber] = useState("");
   const [ninImage, setNinImage] = useState(null);
+
+  const [whatsapp, setWhatsapp] = useState("");
+  const [phone, setPhone] = useState("");
+  const [agencyName, setAgencyName] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -33,6 +38,9 @@ export default function SellerVerification() {
 
     setProfile(data);
     setNinNumber(data?.nin_number || "");
+    setWhatsapp(data?.whatsapp || "");
+    setPhone(data?.phone || "");
+    setAgencyName(data?.agency_name || "");
     setLoading(false);
   }
 
@@ -76,13 +84,16 @@ export default function SellerVerification() {
         email: user.email,
         nin_number: ninNumber,
         nin_image_url: ninImageUrl,
+        whatsapp,
+        phone,
+        agency_name: agencyName,
         verification_status: "pending",
         verification_note: null,
       });
 
       if (saveError) throw saveError;
 
-      setMessage("Verification submitted successfully. Admin will review it.");
+      setMessage("Profile and verification submitted successfully.");
       await fetchProfile();
     } catch (error) {
       setMessage(error.message);
@@ -96,14 +107,14 @@ export default function SellerVerification() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-6 py-10">
+    <div>
       <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow">
         <h1 className="text-3xl font-bold text-slate-900">
-          Seller Verification
+          Seller Profile & Verification
         </h1>
 
         <p className="mt-2 text-slate-600">
-          Submit your NIN details so admin can verify your account.
+          Add your contact details and submit your NIN for admin verification.
         </p>
 
         <div className="mt-6 rounded-xl bg-slate-50 p-4">
@@ -130,6 +141,30 @@ export default function SellerVerification() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <input
             type="text"
+            value={agencyName}
+            onChange={(e) => setAgencyName(e.target.value)}
+            placeholder="Agency name / Seller name"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3"
+          />
+
+          <input
+            type="text"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Phone number e.g 08012345678"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3"
+          />
+
+          <input
+            type="text"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="WhatsApp number e.g 2348012345678"
+            className="w-full rounded-lg border border-gray-300 px-4 py-3"
+          />
+
+          <input
+            type="text"
             value={ninNumber}
             onChange={(e) => setNinNumber(e.target.value)}
             placeholder="Enter your NIN number"
@@ -150,6 +185,7 @@ export default function SellerVerification() {
               <p className="mb-2 font-semibold text-slate-700">
                 Uploaded NIN Image:
               </p>
+
               <img
                 src={profile.nin_image_url}
                 alt="NIN document"
@@ -163,7 +199,7 @@ export default function SellerVerification() {
             disabled={submitting}
             className="w-full rounded-lg bg-purple-700 px-6 py-3 font-semibold text-white disabled:bg-gray-400"
           >
-            {submitting ? "Submitting..." : "Submit Verification"}
+            {submitting ? "Submitting..." : "Save Profile & Submit Verification"}
           </button>
         </form>
       </div>

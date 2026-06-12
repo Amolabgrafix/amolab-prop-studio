@@ -65,6 +65,12 @@ export default function DashboardLayout() {
           >
             Dashboard Home
           </Link>
+          <Link
+              to="/dashboard/favorites"
+              className="block px-4 py-3 rounded-xl hover:bg-slate-800"
+            >
+              My Favorites
+            </Link>
 
           {/* Seller Links */}
           <Link

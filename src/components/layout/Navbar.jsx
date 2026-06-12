@@ -43,7 +43,7 @@ export default function Navbar() {
           <Link to="/properties">Properties</Link>
           <Link to="/properties">Buy</Link>
           <Link to="/properties">Rent</Link>
-          <Link to="/seller/add-property">List Property</Link>
+          <Link to="/dashboard/seller/add-property">List Property</Link>
         </div>
 
         <div className="flex gap-3">

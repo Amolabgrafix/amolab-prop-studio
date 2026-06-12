@@ -1,27 +1,39 @@
 import { supabase } from "../lib/supabase";
 
 export async function getDashboardStats() {
-  const { count: users } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true });
+  const [
+    profiles,
+    properties,
+    enquiries,
+    payments,
+    featuredProperties,
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase.from("properties").select("*"),
+    supabase.from("enquiries").select("*", { count: "exact", head: true }),
+    supabase.from("payments").select("*", { count: "exact", head: true }),
+    supabase
+      .from("properties")
+      .select("*", { count: "exact", head: true })
+      .eq("is_featured", true),
+  ]);
 
-  const { count: properties } = await supabase
-    .from("properties")
-    .select("*", { count: "exact", head: true });
-
-  const { count: payments } = await supabase
-    .from("payments")
-    .select("*", { count: "exact", head: true });
-
-  const { count: pendingUsers } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
+  const propertyRows = properties.data || [];
 
   return {
-    users: users || 0,
-    properties: properties || 0,
-    payments: payments || 0,
-    pendingUsers: pendingUsers || 0,
+    users: profiles.count || 0,
+    properties: propertyRows.length,
+    approvedProperties: propertyRows.filter(
+      (p) => p.status === "approved"
+    ).length,
+    pendingProperties: propertyRows.filter(
+      (p) => p.status === "pending"
+    ).length,
+    rejectedProperties: propertyRows.filter(
+      (p) => p.status === "rejected"
+    ).length,
+    featuredProperties: featuredProperties.count || 0,
+    enquiries: enquiries.count || 0,
+    payments: payments.count || 0,
   };
 }

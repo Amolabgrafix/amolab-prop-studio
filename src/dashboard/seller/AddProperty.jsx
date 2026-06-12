@@ -2,27 +2,20 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function AddProperty() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     title: "",
-    description: "",
-    property_type: "",
-    listing_type: "sale",
+    location: "",
     price: "",
-    state: "",
-    city: "",
-    bedrooms: "",
-    bathrooms: "",
+    type: "",
+    description: "",
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [message, setMessage] = useState("");
+  const [imageFiles, setImageFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
   function handleChange(e) {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   async function handleSubmit(e) {
@@ -31,28 +24,31 @@ export default function AddProperty() {
     setMessage("");
 
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-
-      if (userError) throw userError;
-
+      const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
 
       if (!user) {
-        setMessage("Please login before uploading a property.");
+        setMessage("Please login first.");
         setLoading(false);
         return;
       }
 
-      let imageUrl = null;
+      if (imageFiles.length === 0) {
+        setMessage("Please upload at least one image.");
+        setLoading(false);
+        return;
+      }
 
-      if (imageFile) {
-        const fileExt = imageFile.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+      const uploadedUrls = [];
+
+      for (const file of imageFiles) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("property-images")
-          .upload(filePath, imageFile);
+          .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
@@ -60,41 +56,49 @@ export default function AddProperty() {
           .from("property-images")
           .getPublicUrl(filePath);
 
-        imageUrl = publicUrlData.publicUrl;
+        uploadedUrls.push(publicUrlData.publicUrl);
       }
 
-      const { error } = await supabase.from("properties").insert({
-        title: formData.title,
-        description: formData.description,
-        property_type: formData.property_type,
-        listing_type: formData.listing_type,
-        price: Number(formData.price),
-        state: formData.state,
-        city: formData.city,
-        bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
-        bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
-        image_url: imageUrl,
-        owner_id: user.id,
-        status: "pending",
-      });
+      const { data: propertyData, error: propertyError } = await supabase
+        .from("properties")
+        .insert({
+          title: form.title,
+          location: form.location,
+          price: Number(form.price),
+          type: form.type,
+          description: form.description,
+          image_url: uploadedUrls[0],
+          owner_id: user.id,
+          status: "pending",
+        })
+        .select("id")
+        .single();
 
-      if (error) throw error;
+      if (propertyError) throw propertyError;
 
-      setMessage("Property submitted successfully. Waiting for admin approval.");
+      const imageRows = uploadedUrls.map((url) => ({
+        property_id: propertyData.id,
+        image_url: url,
+      }));
 
-      setFormData({
+      const { error: imagesError } = await supabase
+        .from("property_images")
+        .insert(imageRows);
+
+      if (imagesError) throw imagesError;
+
+      setMessage("Property uploaded successfully. Waiting for admin approval.");
+
+      setForm({
         title: "",
-        description: "",
-        property_type: "",
-        listing_type: "sale",
+        location: "",
         price: "",
-        state: "",
-        city: "",
-        bedrooms: "",
-        bathrooms: "",
+        type: "",
+        description: "",
       });
 
-      setImageFile(null);
+      setImageFiles([]);
+      e.target.reset();
     } catch (error) {
       setMessage(error.message);
     }
@@ -103,132 +107,86 @@ export default function AddProperty() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-10">
-      <div className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-lg">
-        <h1 className="mb-2 text-3xl font-bold text-purple-700">
-          Add Property
-        </h1>
-
-        <p className="mb-6 text-gray-600">
-          Upload your property details. Admin will review and approve it before
-          it appears publicly.
-        </p>
+    <div>
+      <div className="max-w-2xl bg-white p-6 rounded-xl shadow">
+        <h1 className="text-2xl font-bold mb-6">Upload Property</h1>
 
         {message && (
-          <div className="mb-5 rounded-lg bg-purple-100 p-4 text-purple-700">
+          <div className="mb-4 p-3 rounded bg-blue-100 text-blue-700">
             {message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="text"
             name="title"
-            placeholder="Property Title"
-            value={formData.title}
+            value={form.title}
             onChange={handleChange}
+            placeholder="Property title"
+            className="w-full border p-3 rounded"
             required
-            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
           />
+
+          <input
+            name="location"
+            value={form.location}
+            onChange={handleChange}
+            placeholder="Location"
+            className="w-full border p-3 rounded"
+            required
+          />
+
+          <input
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="Price"
+            type="number"
+            className="w-full border p-3 rounded"
+            required
+          />
+
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            className="w-full border p-3 rounded"
+            required
+          >
+            <option value="">Select type</option>
+            <option value="sale">For Sale</option>
+            <option value="rent">For Rent</option>
+          </select>
 
           <textarea
             name="description"
-            placeholder="Description"
-            value={formData.description}
+            value={form.description}
             onChange={handleChange}
+            placeholder="Property description"
+            className="w-full border p-3 rounded h-32"
             required
-            className="h-32 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
           />
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <input
-              type="text"
-              name="property_type"
-              placeholder="Property Type e.g Duplex, Apartment"
-              value={formData.property_type}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setImageFiles(Array.from(e.target.files))}
+            className="w-full border p-3 rounded"
+            required
+          />
 
-            <select
-              name="listing_type"
-              value={formData.listing_type}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            >
-              <option value="sale">For Sale</option>
-              <option value="rent">For Rent</option>
-            </select>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <input
-              type="number"
-              name="price"
-              placeholder="Price"
-              value={formData.price}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-
-            <input
-              type="text"
-              name="state"
-              placeholder="State"
-              value={formData.state}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <input
-              type="text"
-              name="city"
-              placeholder="City"
-              value={formData.city}
-              onChange={handleChange}
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-
-            <input
-              type="number"
-              name="bedrooms"
-              placeholder="Bedrooms"
-              value={formData.bedrooms}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <input
-              type="number"
-              name="bathrooms"
-              placeholder="Bathrooms"
-              value={formData.bathrooms}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImageFile(e.target.files[0])}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-purple-600"
-            />
-          </div>
+          {imageFiles.length > 0 && (
+            <p className="text-sm text-slate-600">
+              {imageFiles.length} image(s) selected
+            </p>
+          )}
 
           <button
-            type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            className="w-full bg-black text-white py-3 rounded font-semibold disabled:bg-gray-400"
           >
-            {loading ? "Submitting..." : "Submit Property"}
+            {loading ? "Uploading..." : "Submit Property"}
           </button>
         </form>
       </div>

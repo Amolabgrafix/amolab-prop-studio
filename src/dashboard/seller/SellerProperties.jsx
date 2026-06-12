@@ -88,7 +88,7 @@ export default function SellerProperties() {
           </div>
 
           <Link
-            to="/seller/add-property"
+            to="/dashboard/seller/add-property"
             className="rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
           >
             Add Property
@@ -108,7 +108,7 @@ export default function SellerProperties() {
             </p>
 
             <Link
-              to="/seller/add-property"
+              to="/dashboard/seller/add-property"
               className="mt-5 inline-block rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white"
             >
               Upload Your First Property
