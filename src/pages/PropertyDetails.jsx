@@ -4,164 +4,136 @@ import { supabase } from "../lib/supabase";
 
 export default function PropertyDetails() {
   const { id } = useParams();
-
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [buyerName, setBuyerName] = useState("");
-  const [buyerEmail, setBuyerEmail] = useState("");
-  const [buyerPhone, setBuyerPhone] = useState("");
-  const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
+  const [enquiry, setEnquiry] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [sent, setSent] = useState("");
 
   useEffect(() => {
-    async function loadProperty() {
-      setLoading(true);
-
+    async function fetchProperty() {
       const { data, error } = await supabase
         .from("properties")
         .select("*")
         .eq("id", id)
         .single();
 
-      if (error) {
-        console.error(error);
-        alert("Failed to load property");
-      } else {
-        setProperty(data);
-      }
-
+      if (!error) setProperty(data);
       setLoading(false);
     }
 
-    loadProperty();
+    fetchProperty();
   }, [id]);
+
+  function handleChange(e) {
+    setEnquiry({ ...enquiry, [e.target.name]: e.target.value });
+  }
 
   async function submitEnquiry(e) {
     e.preventDefault();
-    setSending(true);
 
-    const { error } = await supabase.from("enquiries").insert([
-      {
-        property_id: property.id,
-        seller_id: property.user_id,
-        buyer_name: buyerName,
-        buyer_email: buyerEmail,
-        buyer_phone: buyerPhone,
-        message,
-      },
-    ]);
+    const { error } = await supabase.from("enquiries").insert({
+      property_id: id,
+      name: enquiry.name,
+      email: enquiry.email,
+      phone: enquiry.phone,
+      message: enquiry.message,
+    });
 
     if (error) {
-      console.error(error);
-      alert("Failed to send enquiry");
+      setSent(error.message);
     } else {
-      alert("Enquiry sent successfully");
-
-      setBuyerName("");
-      setBuyerEmail("");
-      setBuyerPhone("");
-      setMessage("");
+      setSent("Enquiry sent successfully.");
+      setEnquiry({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
     }
-
-    setSending(false);
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">Loading property...</p>
-      </div>
-    );
-  }
-
-  if (!property) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg font-semibold">Property not found.</p>
-      </div>
-    );
-  }
+  if (loading) return <p className="p-10">Loading...</p>;
+  if (!property) return <p className="p-10">Property not found.</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-10">
-      <div className="max-w-6xl mx-auto">
-        <img
-          src={
-            property.image_url ||
-            "https://via.placeholder.com/1000x600?text=No+Image"
-          }
-          alt={property.title}
-          className="w-full h-[450px] object-cover rounded-xl shadow"
-        />
-
-        <div className="grid lg:grid-cols-3 gap-8 mt-8">
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow">
-            <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm capitalize mb-4">
-              {property.type}
-            </span>
-
-            <h1 className="text-3xl font-bold text-gray-900">
-              {property.title}
-            </h1>
-
-            <p className="text-gray-600 mt-3">{property.location}</p>
-
-            <p className="text-blue-700 font-bold text-2xl mt-4">
-              ₦{Number(property.price).toLocaleString()}
-            </p>
-
-            <div className="mt-6">
-              <h2 className="text-xl font-bold mb-2">Description</h2>
-              <p className="text-gray-700 leading-7">{property.description}</p>
-            </div>
+      <div className="max-w-5xl mx-auto bg-white rounded-xl shadow overflow-hidden">
+        {property.image_url ? (
+          <img
+            src={property.image_url}
+            alt={property.title}
+            className="w-full h-96 object-cover"
+          />
+        ) : (
+          <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
+            No Image Available
           </div>
+        )}
 
-          <div className="bg-white p-6 rounded-xl shadow h-fit">
-            <h2 className="text-xl font-bold mb-4">Send Enquiry</h2>
+        <div className="p-6">
+          <h1 className="text-3xl font-bold">{property.title}</h1>
+          <p className="text-gray-600 mt-2">{property.location}</p>
+          <p className="text-2xl font-bold mt-4">
+            ₦{Number(property.price).toLocaleString()}
+          </p>
+          <p className="mt-6">{property.description}</p>
+
+          <div className="mt-10 border-t pt-6">
+            <h2 className="text-2xl font-bold mb-4">Send Enquiry</h2>
+
+            {sent && (
+              <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded">
+                {sent}
+              </div>
+            )}
 
             <form onSubmit={submitEnquiry} className="space-y-4">
               <input
-                type="text"
+                name="name"
+                value={enquiry.name}
+                onChange={handleChange}
                 placeholder="Your name"
                 className="w-full border p-3 rounded"
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
                 required
               />
 
               <input
-                type="email"
+                name="email"
+                value={enquiry.email}
+                onChange={handleChange}
                 placeholder="Your email"
+                type="email"
                 className="w-full border p-3 rounded"
-                value={buyerEmail}
-                onChange={(e) => setBuyerEmail(e.target.value)}
                 required
               />
 
               <input
-                type="text"
+                name="phone"
+                value={enquiry.phone}
+                onChange={handleChange}
                 placeholder="Your phone number"
                 className="w-full border p-3 rounded"
-                value={buyerPhone}
-                onChange={(e) => setBuyerPhone(e.target.value)}
                 required
               />
 
               <textarea
-                placeholder="Message"
+                name="message"
+                value={enquiry.message}
+                onChange={handleChange}
+                placeholder="Your message"
                 className="w-full border p-3 rounded h-32"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
                 required
               />
 
-              <button
-                type="submit"
-                disabled={sending}
-                className="w-full bg-blue-700 text-white py-3 rounded font-semibold hover:bg-blue-800"
-              >
-                {sending ? "Sending..." : "Send Enquiry"}
+              <button className="bg-black text-white px-6 py-3 rounded font-semibold">
+                Send Enquiry
               </button>
             </form>
           </div>

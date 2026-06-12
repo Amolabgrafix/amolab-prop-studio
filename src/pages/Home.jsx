@@ -1,5 +1,6 @@
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   return (
@@ -20,15 +21,21 @@ export default function Home() {
                 transparency and trust.
               </p>
 
-              <div className="mt-8 flex flex-wrap gap-4">
-                <button className="bg-white text-purple-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition">
-                  Browse Properties
-                </button>
+              <div className="flex gap-4">
+              <Link
+                to="/properties"
+                className="rounded-xl bg-white px-6 py-4 font-semibold text-purple-700"
+              >
+                Browse Properties
+              </Link>
 
-                <button className="border border-white px-6 py-3 rounded-xl hover:bg-white hover:text-purple-700 transition">
-                  List Property
-                </button>
-              </div>
+              <Link
+                to="/seller/add-property"
+                className="rounded-xl border border-white px-6 py-4 font-semibold text-white"
+              >
+                List Property
+              </Link>
+            </div>
             </div>
           </div>
         </section>
@@ -113,9 +120,12 @@ export default function Home() {
               Amolab Prop Studio.
             </p>
 
-            <button className="mt-8 bg-white text-purple-700 px-8 py-4 rounded-xl font-semibold">
+           <Link
+              to="/register"
+              className="mt-8 inline-block bg-white text-purple-700 px-8 py-4 rounded-xl font-semibold"
+            >
               Get Started Today
-            </button>
+          </Link>
           </div>
         </section>
       </main>

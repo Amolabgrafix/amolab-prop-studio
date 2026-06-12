@@ -1,6 +1,14 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 export default function DashboardLayout() {
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    navigate("/login");
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 flex">
       <aside className="w-64 bg-slate-900 text-white hidden md:block">
@@ -12,15 +20,23 @@ export default function DashboardLayout() {
           <Link to="/admin/dashboard" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Dashboard
           </Link>
+
           <Link to="/admin/users" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Users
           </Link>
+
           <Link to="/admin/properties" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Properties
           </Link>
+
+          <Link to="/admin/verifications" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
+            Verifications
+          </Link>
+
           <Link to="/admin/design-requests" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Design Requests
           </Link>
+
           <Link to="/admin/payments" className="block px-4 py-3 rounded-xl hover:bg-slate-800">
             Payments
           </Link>
@@ -30,7 +46,11 @@ export default function DashboardLayout() {
       <main className="flex-1">
         <header className="bg-white border-b px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-slate-800">Dashboard</h1>
-          <button className="bg-purple-700 text-white px-4 py-2 rounded-xl">
+
+          <button
+            onClick={handleLogout}
+            className="bg-purple-700 text-white px-4 py-2 rounded-xl hover:bg-purple-800"
+          >
             Logout
           </button>
         </header>
