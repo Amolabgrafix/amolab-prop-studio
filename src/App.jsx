@@ -26,6 +26,7 @@ import DashboardHome from "./dashboard/DashboardHome";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import Favorites from "./dashboard/Favorites";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
 
         {/* Public Properties */}
         <Route path="/properties" element={<Properties />} />

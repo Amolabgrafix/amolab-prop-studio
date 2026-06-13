@@ -45,7 +45,9 @@ export default function Properties() {
         .from("properties")
         .select("*")
         .eq("status", "approved")
+        .order("is_boosted", { ascending: false })
         .order("is_featured", { ascending: false })
+        .order("views", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (propertyError) throw propertyError;
@@ -71,16 +73,9 @@ export default function Properties() {
   }
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // call the existing loadPageData but guard state updates if unmounted
-        await loadPageData();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    fetchData();
+    (async () => {
+      await loadPageData();
+    })();
   }, []);
 
   async function toggleFavorite(e, propertyId) {
@@ -132,9 +127,15 @@ export default function Properties() {
       property.description?.toLowerCase().includes(searchText);
 
     const matchesLocation =
-      location === "" || property.location?.toLowerCase().includes(locationText);
+      location === "" ||
+      property.location?.toLowerCase().includes(locationText) ||
+      property.city?.toLowerCase().includes(locationText) ||
+      property.state?.toLowerCase().includes(locationText);
 
-    const matchesType = propertyType === "" || property.type === propertyType;
+    const matchesType =
+      propertyType === "" ||
+      property.type === propertyType ||
+      property.property_type === propertyType;
 
     const matchesMin =
       minPrice === "" || Number(property.price) >= Number(minPrice);
@@ -271,6 +272,12 @@ export default function Properties() {
                     </span>
                   )}
 
+                  {property.is_boosted && (
+                    <span className="absolute left-4 top-14 z-10 rounded-full bg-purple-700 px-3 py-1 text-sm font-semibold text-white">
+                      🚀 Boosted
+                    </span>
+                  )}
+
                   <PropertyImage
                     src={property.image_url}
                     title={property.title}
@@ -279,7 +286,7 @@ export default function Properties() {
                   <div className="p-5">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <span className="rounded-full bg-blue-100 px-3 py-1 text-sm capitalize text-blue-700">
-                        {property.type || "property"}
+                        {property.type || property.property_type || "property"}
                       </span>
 
                       <span className="text-sm text-gray-500">Approved</span>
@@ -289,10 +296,12 @@ export default function Properties() {
                       {property.title}
                     </h2>
 
-                    <p className="text-gray-500">{property.location}</p>
+                    <p className="text-gray-500">
+                      {property.location || property.city || property.state}
+                    </p>
 
                     <p className="mt-3 text-lg font-bold text-blue-700">
-                      ₦{Number(property.price).toLocaleString()}
+                      ₦{Number(property.price || 0).toLocaleString()}
                     </p>
 
                     <p className="mt-3 line-clamp-3 text-gray-600">

@@ -11,7 +11,7 @@ export default function TrendingProperties() {
       .select("*")
       .eq("status", "approved")
       .order("is_featured", { ascending: false })
-      .order("views", { ascending: false })
+       .order("views", { ascending: false })
       .limit(6);
 
     setProperties(data || []);
