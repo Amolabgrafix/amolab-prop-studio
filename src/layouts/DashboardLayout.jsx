@@ -101,12 +101,20 @@ export default function DashboardLayout() {
             Verification
           </Link>
 
+          
           <Link
             to="/dashboard/seller/enquiries"
             className="block px-4 py-3 rounded-xl hover:bg-slate-800"
           >
             My Enquiries
           </Link>
+
+          <Link
+          to="/dashboard/seller/payments"
+          className="block rounded-lg px-4 py-2 text-slate-700 hover:bg-purple-100"
+        >
+          Payment History
+        </Link>
 
           {/* Admin Links */}
           {role === "admin" && (
@@ -163,6 +171,13 @@ export default function DashboardLayout() {
               >
                 Enquiries
               </Link>
+
+              <Link
+              to="/dashboard/admin/revenue"
+              className="block rounded-lg px-4 py-2 text-slate-700 hover:bg-purple-100"
+            >
+              Revenue
+            </Link>
             </>
           )}
         </nav>

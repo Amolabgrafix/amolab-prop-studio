@@ -29,7 +29,6 @@ export default function AddProperty() {
 
       if (!user) {
         setMessage("Please login first.");
-        setLoading(false);
         return;
       }
 
@@ -53,14 +52,17 @@ export default function AddProperty() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const { error } = await supabase.from("properties").insert({
+      const { error } = await supabase.from("properties")
+      .insert({
         title: form.title,
         location: form.location,
+        address: form.location,
         price: Number(form.price),
         type: form.type,
+        listing_type: form.type,
         description: form.description,
         image_url: imageUrl,
-        user_id: user.id,
+        owner_id: user.id,
         status: "pending",
       });
 
@@ -76,10 +78,20 @@ export default function AddProperty() {
       });
       setImageFile(null);
     } catch (error) {
-      setMessage(error.message);
-    }
+      console.log("FULL ADD PROPERTY ERROR:", error);
+      console.log("ERROR MESSAGE:", error.message);
+      console.log("ERROR DETAILS:", error.details);
+      console.log("ERROR HINT:", error.hint);
+      console.log("ERROR CODE:", error.code);
 
-    setLoading(false);
+      setMessage(
+        error.message ||
+          error.details ||
+          "Something went wrong while uploading property."
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

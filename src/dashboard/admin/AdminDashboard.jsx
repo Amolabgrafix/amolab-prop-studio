@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getDashboardStats } from "../../services/dashboard";
 
 export default function AdminDashboard() {
@@ -75,6 +76,7 @@ export default function AdminDashboard() {
         Platform overview and analytics.
       </p>
 
+      {/* Statistics */}
       <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
           <div
@@ -88,6 +90,107 @@ export default function AdminDashboard() {
             </h3>
           </div>
         ))}
+      </div>
+
+      {/* Admin Tools */}
+      <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+        <Link
+          to="/dashboard/admin/users"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Manage Users
+          </h3>
+          <p className="mt-2 text-slate-600">
+            View and manage all platform users.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/properties"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Manage Properties
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Approve, reject and feature property listings.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/verifications"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Verifications
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Review seller verification requests.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/enquiries"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Enquiries
+          </h3>
+          <p className="mt-2 text-slate-600">
+            View all buyer and tenant enquiries.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/payments"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Payments
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Monitor all payment transactions.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/revenue"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Revenue Dashboard
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Track revenue, subscriptions and earnings.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/design-requests"
+          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold text-slate-900">
+            Design Requests
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Review submitted design requests.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/admin/analytics"
+          className="rounded-2xl bg-purple-700 p-6 text-white shadow hover:bg-purple-800 transition"
+        >
+          <h3 className="text-xl font-bold">
+            Platform Analytics
+          </h3>
+          <p className="mt-2 text-purple-100">
+            Monitor growth, views, enquiries and top properties.
+          </p>
+        </Link>
+
       </div>
     </div>
   );

@@ -8,6 +8,8 @@ export default function PaymentSuccess() {
 
   const [status, setStatus] = useState("Verifying your payment...");
   const [success, setSuccess] = useState(false);
+  const [backLink, setBackLink] = useState("/dashboard/seller/properties");
+  const [backText, setBackText] = useState("Back to My Properties");
 
   useEffect(() => {
     async function verifyPayment() {
@@ -16,12 +18,32 @@ export default function PaymentSuccess() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke(
-        "verify-boost-payment",
-        {
-          body: { reference },
-        }
-      );
+      let functionName;
+      let successMessage;
+
+      if (reference.startsWith("BOOST-")) {
+        functionName = "verify-boost-payment";
+        successMessage = "Your property boost has been activated successfully.";
+        setBackLink("/dashboard/seller/properties");
+        setBackText("Back to My Properties");
+      } else if (reference.startsWith("FEATURE-")) {
+        functionName = "verify-featured-payment";
+        successMessage = "Your property feature has been activated successfully.";
+        setBackLink("/dashboard/seller/properties");
+        setBackText("Back to My Properties");
+      } else if (reference.startsWith("SUB-")) {
+        functionName = "verify-subscription-payment";
+        successMessage = "Your subscription has been activated successfully.";
+        setBackLink("/dashboard/seller/subscription");
+        setBackText("Back to Subscription Plans");
+      } else {
+        setStatus("Unknown payment type.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: { reference },
+      });
 
       if (error || !data?.success) {
         setStatus(data?.error || error?.message || "Payment verification failed.");
@@ -30,7 +52,7 @@ export default function PaymentSuccess() {
       }
 
       setSuccess(true);
-      setStatus("Your property boost has been activated successfully.");
+      setStatus(successMessage);
     }
 
     verifyPayment();
@@ -56,11 +78,12 @@ export default function PaymentSuccess() {
         )}
 
         <Link
-          to="/dashboard/seller/properties"
-          className="mt-6 inline-block rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
-        >
-          Back to My Properties
-        </Link>
+        to={backLink}
+        replace
+        className="mt-6 inline-block rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
+      >
+        {backText}
+      </Link>
       </div>
     </div>
   );

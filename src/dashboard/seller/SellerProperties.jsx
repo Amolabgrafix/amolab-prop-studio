@@ -6,10 +6,16 @@ function createBoostReference(propertyId) {
   return `BOOST-${propertyId}-${Date.now()}`;
 }
 
+function createFeatureReference(propertyId) {
+  return `FEATURE-${propertyId}-${Date.now()}`;
+}
+
 export default function SellerProperties() {
   const [properties, setProperties] = useState([]);
+  const [subscriptionPlan, setSubscriptionPlan] = useState("free");
   const [loading, setLoading] = useState(true);
   const [boostingId, setBoostingId] = useState(null);
+  const [featuringId, setFeaturingId] = useState(null);
   const [message, setMessage] = useState("");
 
   async function fetchProperties() {
@@ -31,6 +37,14 @@ export default function SellerProperties() {
       return;
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_plan")
+      .eq("id", user.id)
+      .single();
+
+    setSubscriptionPlan(profile?.subscription_plan || "free");
+
     const { data, error } = await supabase
       .from("properties")
       .select("*")
@@ -50,8 +64,7 @@ export default function SellerProperties() {
     const loadProperties = async () => {
       await fetchProperties();
     };
-
-    void loadProperties();
+    loadProperties();
   }, []);
 
   async function deleteProperty(id) {
@@ -84,6 +97,11 @@ export default function SellerProperties() {
 
       if (!user) {
         setMessage("Please login first.");
+        return;
+      }
+
+      if (subscriptionPlan === "free") {
+        setMessage("Please upgrade to Pro or Agency to boost properties.");
         return;
       }
 
@@ -123,13 +141,82 @@ export default function SellerProperties() {
         throw new Error(data?.error || "Failed to initialize Paystack payment.");
       }
 
-      // use assign to navigate to the payment authorization URL
-      window.location.assign(data.authorization_url);
+      window.location.replace(data.authorization_url);
     } catch (error) {
       console.error("Boost payment error:", error);
       setMessage(error.message || "Failed to start boost payment.");
     } finally {
       setBoostingId(null);
+    }
+  }
+
+  async function requestFeature(property, plan, amount, durationDays) {
+    try {
+      setMessage("");
+      setFeaturingId(property.id);
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+
+      if (userError) throw userError;
+
+      const user = userData?.user;
+
+      if (!user) {
+        setMessage("Please login first.");
+        return;
+      }
+
+      if (subscriptionPlan === "free") {
+        setMessage("Please upgrade to Pro or Agency to feature properties.");
+        return;
+      }
+
+      const reference = createFeatureReference(property.id);
+
+      const { error: paymentError } = await supabase.from("payments").insert({
+        user_id: user.id,
+        property_id: property.id,
+        reference,
+        amount,
+        status: "pending",
+        purpose: "property_feature",
+        plan,
+        duration_days: durationDays,
+      });
+
+      if (paymentError) throw paymentError;
+
+      const { data, error } = await supabase.functions.invoke(
+        "initialize-featured-payment",
+        {
+          body: {
+            email: user.email,
+            amount,
+            property_id: property.id,
+            user_id: user.id,
+            plan,
+            duration_days: durationDays,
+            reference,
+          },
+        }
+      );
+
+      if (error) {
+        setMessage(error.message || "Featured payment initialization failed.");
+        return;
+      }
+
+      if (!data?.success || !data?.authorization_url) {
+        setMessage(data?.error || "Failed to initialize featured payment.");
+        return;
+      }
+
+      window.location.replace(data.authorization_url);
+    } catch (error) {
+      console.error("Featured payment error:", error);
+      setMessage(error.message || "Failed to start featured payment.");
+    } finally {
+      setFeaturingId(null);
     }
   }
 
@@ -152,14 +239,26 @@ export default function SellerProperties() {
             <p className="mt-2 text-slate-600">
               View, manage and promote all properties you have uploaded.
             </p>
+            <p className="mt-2 text-sm font-semibold capitalize text-purple-700">
+              Current Plan: {subscriptionPlan}
+            </p>
           </div>
 
-          <Link
-            to="/dashboard/seller/add-property"
-            className="rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
-          >
-            Add Property
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/dashboard/seller/subscription"
+              className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-black"
+            >
+              Upgrade Plan
+            </Link>
+
+            <Link
+              to="/dashboard/seller/add-property"
+              className="rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
+            >
+              Add Property
+            </Link>
+          </div>
         </div>
 
         {message && (
@@ -185,6 +284,7 @@ export default function SellerProperties() {
           <div className="grid gap-6 md:grid-cols-3">
             {properties.map((property) => {
               const isBoosting = boostingId === property.id;
+              const isFeaturing = featuringId === property.id;
 
               return (
                 <div
@@ -215,6 +315,12 @@ export default function SellerProperties() {
                     </div>
 
                     <div className="mb-3 flex flex-wrap gap-2">
+                      {subscriptionPlan === "agency" && (
+                        <span className="rounded-full bg-green-600 px-3 py-1 text-sm font-semibold text-white">
+                          🏢 Agency
+                        </span>
+                      )}
+
                       {property.is_boosted && (
                         <span className="rounded-full bg-purple-700 px-3 py-1 text-sm font-semibold text-white">
                           🚀 Boosted
@@ -229,7 +335,8 @@ export default function SellerProperties() {
                     </div>
 
                     <p className="text-slate-600">
-                      {property.city}, {property.state}
+                      {property.city || property.location || property.address},{" "}
+                      {property.state}
                     </p>
 
                     <p className="mt-3 text-2xl font-bold text-purple-700">
@@ -245,45 +352,127 @@ export default function SellerProperties() {
                       </p>
                     )}
 
-                    {property.status === "approved" && !property.is_boosted && (
-                      <div className="mt-5 rounded-xl bg-purple-50 p-4">
-                        <p className="mb-3 font-semibold text-purple-800">
-                          Promote this property
-                        </p>
-
-                        <div className="grid gap-2">
-                          <button
-                            disabled={isBoosting}
-                            onClick={() =>
-                              requestBoost(property, "7_days", 2500, 7)
-                            }
-                            className="rounded-lg bg-purple-700 px-4 py-2 font-semibold text-white hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isBoosting ? "Starting payment..." : "Boost 7 Days — ₦2,500"}
-                          </button>
-
-                          <button
-                            disabled={isBoosting}
-                            onClick={() =>
-                              requestBoost(property, "14_days", 4500, 14)
-                            }
-                            className="rounded-lg bg-indigo-700 px-4 py-2 font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isBoosting ? "Starting payment..." : "Boost 14 Days — ₦4,500"}
-                          </button>
-
-                          <button
-                            disabled={isBoosting}
-                            onClick={() =>
-                              requestBoost(property, "30_days", 8000, 30)
-                            }
-                            className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {isBoosting ? "Starting payment..." : "Boost 30 Days — ₦8,000"}
-                          </button>
-                        </div>
-                      </div>
+                    {property.featured_expires_at && (
+                      <p className="mt-2 text-sm text-slate-500">
+                        Featured expires:{" "}
+                        {new Date(
+                          property.featured_expires_at
+                        ).toLocaleDateString()}
+                      </p>
                     )}
+
+                    {subscriptionPlan === "free" &&
+                      property.status === "approved" && (
+                        <div className="mt-5 rounded-xl bg-orange-50 p-4">
+                          <p className="font-semibold text-orange-800">
+                            Upgrade to Pro or Agency to boost or feature this
+                            property.
+                          </p>
+
+                          <Link
+                            to="/dashboard/seller/subscription"
+                            className="mt-3 inline-block rounded-lg bg-orange-600 px-4 py-2 font-semibold text-white hover:bg-orange-700"
+                          >
+                            Upgrade Now
+                          </Link>
+                        </div>
+                      )}
+
+                    {subscriptionPlan !== "free" &&
+                      property.status === "approved" &&
+                      !property.is_boosted && (
+                        <div className="mt-5 rounded-xl bg-purple-50 p-4">
+                          <p className="mb-3 font-semibold text-purple-800">
+                            Promote this property
+                          </p>
+
+                          <div className="grid gap-2">
+                            <button
+                              disabled={isBoosting}
+                              onClick={() =>
+                                requestBoost(property, "7_days", 2500, 7)
+                              }
+                              className="rounded-lg bg-purple-700 px-4 py-2 font-semibold text-white hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBoosting
+                                ? "Starting payment..."
+                                : "Boost 7 Days — ₦2,500"}
+                            </button>
+
+                            <button
+                              disabled={isBoosting}
+                              onClick={() =>
+                                requestBoost(property, "14_days", 4500, 14)
+                              }
+                              className="rounded-lg bg-indigo-700 px-4 py-2 font-semibold text-white hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBoosting
+                                ? "Starting payment..."
+                                : "Boost 14 Days — ₦4,500"}
+                            </button>
+
+                            <button
+                              disabled={isBoosting}
+                              onClick={() =>
+                                requestBoost(property, "30_days", 8000, 30)
+                              }
+                              className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isBoosting
+                                ? "Starting payment..."
+                                : "Boost 30 Days — ₦8,000"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    {subscriptionPlan !== "free" &&
+                      property.status === "approved" &&
+                      !property.is_featured && (
+                        <div className="mt-5 rounded-xl bg-yellow-50 p-4">
+                          <p className="mb-3 font-semibold text-yellow-800">
+                            Feature this property
+                          </p>
+
+                          <div className="grid gap-2">
+                            <button
+                              disabled={isFeaturing}
+                              onClick={() =>
+                                requestFeature(property, "7_days", 3500, 7)
+                              }
+                              className="rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isFeaturing
+                                ? "Starting payment..."
+                                : "Feature 7 Days — ₦3,500"}
+                            </button>
+
+                            <button
+                              disabled={isFeaturing}
+                              onClick={() =>
+                                requestFeature(property, "14_days", 6500, 14)
+                              }
+                              className="rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isFeaturing
+                                ? "Starting payment..."
+                                : "Feature 14 Days — ₦6,500"}
+                            </button>
+
+                            <button
+                              disabled={isFeaturing}
+                              onClick={() =>
+                                requestFeature(property, "30_days", 10000, 30)
+                              }
+                              className="rounded-lg bg-orange-700 px-4 py-2 font-semibold text-white hover:bg-orange-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isFeaturing
+                                ? "Starting payment..."
+                                : "Feature 30 Days — ₦10,000"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                     <div className="mt-5 flex gap-3">
                       <Link

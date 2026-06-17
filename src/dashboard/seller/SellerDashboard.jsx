@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
+import { getSubscriptionLimits } from "../../lib/subscriptionLimits";
 
 export default function SellerDashboard() {
   const [stats, setStats] = useState({
@@ -9,6 +10,12 @@ export default function SellerDashboard() {
     approved: 0,
     rejected: 0,
     verificationStatus: "unverified",
+  });
+
+  const [subscription, setSubscription] = useState({
+    plan: "free",
+    expiresAt: null,
+    maxProperties: 3,
   });
 
   const [recentProperties, setRecentProperties] = useState([]);
@@ -28,9 +35,20 @@ export default function SellerDashboard() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("verification_status")
+        .select(
+          "verification_status, subscription_plan, subscription_expires_at"
+        )
         .eq("id", user.id)
         .single();
+
+      const plan = profileData?.subscription_plan || "free";
+      const limits = getSubscriptionLimits(plan);
+
+      setSubscription({
+        plan,
+        expiresAt: profileData?.subscription_expires_at || null,
+        maxProperties: limits.maxProperties,
+      });
 
       const { data, error } = await supabase
         .from("properties")
@@ -60,6 +78,11 @@ export default function SellerDashboard() {
     return <div className="p-10">Loading seller dashboard...</div>;
   }
 
+  const propertyLimitText =
+    subscription.maxProperties === Infinity
+      ? `${stats.total} / Unlimited`
+      : `${stats.total} / ${subscription.maxProperties}`;
+
   return (
     <div>
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -78,6 +101,39 @@ export default function SellerDashboard() {
         >
           Add New Property
         </Link>
+      </div>
+
+      <div className="mb-8 rounded-2xl bg-white p-6 shadow">
+        <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+          <div>
+            <p className="text-slate-500">Current Subscription</p>
+
+            <h2 className="mt-2 text-3xl font-bold capitalize text-purple-700">
+              {subscription.plan}
+            </h2>
+
+            <p className="mt-2 text-slate-600">
+              Properties Used:{" "}
+              <span className="font-semibold">{propertyLimitText}</span>
+            </p>
+
+            <p className="mt-1 text-slate-600">
+              Expires:{" "}
+              <span className="font-semibold">
+                {subscription.expiresAt
+                  ? new Date(subscription.expiresAt).toLocaleDateString()
+                  : "No expiry"}
+              </span>
+            </p>
+          </div>
+
+          <Link
+            to="/dashboard/seller/subscription"
+            className="rounded-xl bg-slate-900 px-6 py-3 text-center font-semibold text-white hover:bg-black"
+          >
+            Upgrade Plan
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-5">
@@ -123,7 +179,7 @@ export default function SellerDashboard() {
         </Link>
       </div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
+      <div className="mt-8 grid gap-6 md:grid-cols-4">
         <Link
           to="/dashboard/seller/properties"
           className="rounded-2xl bg-purple-700 p-6 text-white shadow hover:bg-purple-800"
@@ -154,6 +210,23 @@ export default function SellerDashboard() {
           <p className="mt-2 text-slate-600">
             Submit or update your NIN verification.
           </p>
+        </Link>
+        <Link
+        to="/dashboard/seller/analytics"
+        className="rounded-2xl bg-white p-6 shadow hover:shadow-lg"
+      >
+        <h3 className="text-xl font-bold text-slate-900">Property Analytics</h3>
+        <p className="mt-2 text-slate-600">
+          Track property views, enquiries and performance.
+        </p>
+      </Link>
+
+        <Link
+          to="/dashboard/seller/subscription"
+          className="rounded-2xl bg-purple-700 p-6 text-white shadow hover:bg-purple-800"
+        >
+          <h3 className="text-xl font-bold">Subscription Plans</h3>
+          <p className="mt-2 text-purple-100">Upgrade to Pro or Agency.</p>
         </Link>
       </div>
 
@@ -204,7 +277,7 @@ export default function SellerDashboard() {
                     <td className="p-3 font-semibold">{property.title}</td>
 
                     <td className="p-3">
-                      ₦{Number(property.price).toLocaleString()}
+                      ₦{Number(property.price || 0).toLocaleString()}
                     </td>
 
                     <td className="p-3">

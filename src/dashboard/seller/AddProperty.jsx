@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { getSubscriptionLimits } from "../../lib/subscriptionLimits";
 
 export default function AddProperty() {
   const [form, setForm] = useState({
@@ -29,6 +30,32 @@ export default function AddProperty() {
 
       if (!user) {
         setMessage("Please login first.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("subscription_plan")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const plan = profile?.subscription_plan || "free";
+      const limits = getSubscriptionLimits(plan);
+
+      const { count, error: countError } = await supabase
+        .from("properties")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", user.id);
+
+      if (countError) throw countError;
+
+      if (count >= limits.maxProperties) {
+        setMessage(
+          `Your ${limits.name} plan allows only ${limits.maxProperties} properties. Please upgrade your plan.`
+        );
         setLoading(false);
         return;
       }
@@ -63,7 +90,7 @@ export default function AddProperty() {
         .from("properties")
         .insert({
           title: form.title,
-          location: form.location,
+          address: form.location,
           price: Number(form.price),
           type: form.type,
           description: form.description,

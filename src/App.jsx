@@ -3,8 +3,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Properties from "./pages/Properties";
+import PropertyDetails from "./pages/PropertyDetails";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 import DashboardLayout from "./layouts/DashboardLayout";
+import DashboardHome from "./dashboard/DashboardHome";
+import Favorites from "./dashboard/Favorites";
 
 import AdminDashboard from "./dashboard/admin/AdminDashboard";
 import AdminUsers from "./dashboard/admin/AdminUsers";
@@ -13,20 +18,19 @@ import AdminVerifications from "./dashboard/admin/AdminVerifications";
 import AdminEnquiries from "./dashboard/admin/AdminEnquiries";
 import AdminDesignRequests from "./dashboard/admin/AdminDesignRequests";
 import AdminPayments from "./dashboard/admin/AdminPayments";
+import AdminRevenue from "./dashboard/admin/AdminRevenue";
+import AdminAnalytics from "./dashboard/admin/AdminAnalytics";
 
 import AddProperty from "./dashboard/seller/AddProperty";
 import SellerDashboard from "./dashboard/seller/SellerDashboard";
 import SellerProperties from "./dashboard/seller/SellerProperties";
 import SellerVerification from "./dashboard/seller/SellerVerification";
 import SellerEnquiries from "./dashboard/seller/SellerEnquiries";
-
-import Properties from "./pages/Properties";
-import PropertyDetails from "./pages/PropertyDetails";
-import DashboardHome from "./dashboard/DashboardHome";
+import SellerPayments from "./dashboard/seller/SellerPayments";
+import SubscriptionPlans from "./dashboard/seller/SubscriptionPlans";
+import SellerAnalytics from "./dashboard/seller/SellerAnalytics";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
-import Favorites from "./dashboard/Favorites";
-import PaymentSuccess from "./pages/PaymentSuccess";
 
 function App() {
   return (
@@ -36,13 +40,16 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Payment Success Routes */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
 
         {/* Public Properties */}
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<PropertyDetails />} />
 
-        {/* General Dashboard */}
+        {/* Dashboard */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="favorites" element={<Favorites />} />
@@ -53,6 +60,10 @@ function App() {
           <Route path="seller/add-property" element={<AddProperty />} />
           <Route path="seller/verification" element={<SellerVerification />} />
           <Route path="seller/enquiries" element={<SellerEnquiries />} />
+          <Route path="seller/payments" element={<SellerPayments />} />
+          <Route path="seller/subscription" element={<SubscriptionPlans />} />
+          <Route path="seller/analytics" element={<SellerAnalytics />} />
+
 
           {/* Admin Pages */}
           <Route
@@ -110,6 +121,15 @@ function App() {
           />
 
           <Route
+            path="admin/revenue"
+            element={
+              <ProtectedAdminRoute>
+                <AdminRevenue />
+              </ProtectedAdminRoute>
+            }
+          />
+
+          <Route
             path="admin/design-requests"
             element={
               <ProtectedAdminRoute>
@@ -117,9 +137,16 @@ function App() {
               </ProtectedAdminRoute>
             }
           />
-        </Route>
 
-        {/* Old routes redirect safety can be added later */}
+          <Route
+            path="admin/analytics"
+            element={
+              <ProtectedAdminRoute>
+                <AdminAnalytics />
+              </ProtectedAdminRoute>
+            }
+          />
+        </Route>
 
         {/* 404 */}
         <Route
