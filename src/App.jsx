@@ -41,16 +41,80 @@ import SellerInspections from "./dashboard/seller/SellerInspections";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
+function PremiumBackground() {
+  return (
+    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-slate-50">
+      <motion.div
+        animate={{
+          x: [0, 120, 0],
+          y: [0, 80, 0],
+          scale: [1, 1.25, 1],
+          opacity: [0.25, 0.45, 0.25],
+        }}
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -left-40 top-10 h-[520px] w-[520px] rounded-full bg-purple-500 blur-[160px]"
+      />
+
+      <motion.div
+        animate={{
+          x: [0, -140, 0],
+          y: [0, -90, 0],
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -right-44 bottom-0 h-[560px] w-[560px] rounded-full bg-blue-500 blur-[170px]"
+      />
+
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 50,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-200/40"
+      />
+    </div>
+  );
+}
+
 function PageWrapper({ children }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+    <motion.main
+      initial={{
+        opacity: 0,
+        y: 42,
+        scale: 0.96,
+        filter: "blur(12px)",
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        filter: "blur(0px)",
+      }}
+      exit={{
+        opacity: 0,
+        y: -28,
+        scale: 1.03,
+        filter: "blur(10px)",
+      }}
+      transition={{
+        duration: 0.75,
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
       {children}
-    </motion.div>
+    </motion.main>
   );
 }
 
@@ -60,86 +124,15 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route
-          path="/"
-          element={
-            <PageWrapper>
-              <Home />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/login"
-          element={
-            <PageWrapper>
-              <Login />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/register"
-          element={
-            <PageWrapper>
-              <Register />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/properties"
-          element={
-            <PageWrapper>
-              <Properties />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/properties/:id"
-          element={
-            <PageWrapper>
-              <PropertyDetails />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/agent/:id"
-          element={
-            <PageWrapper>
-              <AgentProfile />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/compare"
-          element={
-            <PageWrapper>
-              <CompareProperties />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/payment/success"
-          element={
-            <PageWrapper>
-              <PaymentSuccess />
-            </PageWrapper>
-          }
-        />
-
-        <Route
-          path="/payment-success"
-          element={
-            <PageWrapper>
-              <PaymentSuccess />
-            </PageWrapper>
-          }
-        />
+        <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />
+        <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+        <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
+        <Route path="/properties" element={<PageWrapper><Properties /></PageWrapper>} />
+        <Route path="/properties/:id" element={<PageWrapper><PropertyDetails /></PageWrapper>} />
+        <Route path="/agent/:id" element={<PageWrapper><AgentProfile /></PageWrapper>} />
+        <Route path="/compare" element={<PageWrapper><CompareProperties /></PageWrapper>} />
+        <Route path="/payment/success" element={<PageWrapper><PaymentSuccess /></PageWrapper>} />
+        <Route path="/payment-success" element={<PageWrapper><PaymentSuccess /></PageWrapper>} />
 
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
@@ -158,103 +151,24 @@ function AnimatedRoutes() {
           <Route path="seller/analytics" element={<SellerAnalytics />} />
           <Route path="seller/inspections" element={<SellerInspections />} />
 
-          <Route
-            path="admin"
-            element={
-              <ProtectedAdminRoute>
-                <AdminDashboard />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/users"
-            element={
-              <ProtectedAdminRoute>
-                <AdminUsers />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/properties"
-            element={
-              <ProtectedAdminRoute>
-                <AdminProperties />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/verifications"
-            element={
-              <ProtectedAdminRoute>
-                <AdminVerifications />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/enquiries"
-            element={
-              <ProtectedAdminRoute>
-                <AdminEnquiries />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/payments"
-            element={
-              <ProtectedAdminRoute>
-                <AdminPayments />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/revenue"
-            element={
-              <ProtectedAdminRoute>
-                <AdminRevenue />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/design-requests"
-            element={
-              <ProtectedAdminRoute>
-                <AdminDesignRequests />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/inspections"
-            element={
-              <ProtectedAdminRoute>
-                <AdminInspections />
-              </ProtectedAdminRoute>
-            }
-          />
-
-          <Route
-            path="admin/analytics"
-            element={
-              <ProtectedAdminRoute>
-                <AdminAnalytics />
-              </ProtectedAdminRoute>
-            }
-          />
+          <Route path="admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+          <Route path="admin/users" element={<ProtectedAdminRoute><AdminUsers /></ProtectedAdminRoute>} />
+          <Route path="admin/properties" element={<ProtectedAdminRoute><AdminProperties /></ProtectedAdminRoute>} />
+          <Route path="admin/verifications" element={<ProtectedAdminRoute><AdminVerifications /></ProtectedAdminRoute>} />
+          <Route path="admin/enquiries" element={<ProtectedAdminRoute><AdminEnquiries /></ProtectedAdminRoute>} />
+          <Route path="admin/payments" element={<ProtectedAdminRoute><AdminPayments /></ProtectedAdminRoute>} />
+          <Route path="admin/revenue" element={<ProtectedAdminRoute><AdminRevenue /></ProtectedAdminRoute>} />
+          <Route path="admin/design-requests" element={<ProtectedAdminRoute><AdminDesignRequests /></ProtectedAdminRoute>} />
+          <Route path="admin/inspections" element={<ProtectedAdminRoute><AdminInspections /></ProtectedAdminRoute>} />
+          <Route path="admin/analytics" element={<ProtectedAdminRoute><AdminAnalytics /></ProtectedAdminRoute>} />
         </Route>
 
         <Route
           path="*"
           element={
             <PageWrapper>
-              <div className="flex min-h-screen items-center justify-center bg-slate-100">
-                <h1 className="text-3xl font-bold text-purple-700">
+              <div className="flex min-h-screen items-center justify-center">
+                <h1 className="text-3xl font-black text-purple-700">
                   Page Not Found
                 </h1>
               </div>
@@ -269,8 +183,35 @@ function AnimatedRoutes() {
 function App() {
   return (
     <BrowserRouter>
+      <PremiumBackground />
       <AnimatedRoutes />
-      <Toaster position="top-right" />
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            borderRadius: "18px",
+            background: "#0f172a",
+            color: "#fff",
+            padding: "14px 18px",
+            fontWeight: "700",
+            boxShadow: "0 20px 60px rgba(15, 23, 42, 0.25)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#22c55e",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import AnimatedCard from "../components/AnimatedCard";
+import { PropertyGridLoader } from "../components/LoadingGrid";
 import { supabase } from "../lib/supabase";
 
 function PropertyImage({ src, title }) {
@@ -18,7 +21,7 @@ function PropertyImage({ src, title }) {
       src={src}
       alt={title}
       onError={() => setFailed(true)}
-      className="h-56 w-full object-cover"
+      className="h-56 w-full object-cover transition duration-700 group-hover:scale-110"
     />
   );
 }
@@ -66,7 +69,7 @@ export default function Properties() {
       }
     } catch (error) {
       console.error("Error loading properties:", error);
-      alert(error.message || "Failed to load properties");
+      toast.error(error.message || "Failed to load properties");
     } finally {
       setLoading(false);
     }
@@ -83,7 +86,7 @@ export default function Properties() {
     e.stopPropagation();
 
     if (!user) {
-      alert("Please login to save properties.");
+      toast.error("Please login to save properties.");
       return;
     }
 
@@ -97,11 +100,12 @@ export default function Properties() {
         .eq("property_id", propertyId);
 
       if (error) {
-        alert(error.message);
+        toast.error(error.message);
         return;
       }
 
       setFavoriteIds((prev) => prev.filter((id) => id !== propertyId));
+      toast.success("Removed from favorites");
     } else {
       const { error } = await supabase.from("favorites").insert({
         user_id: user.id,
@@ -109,11 +113,12 @@ export default function Properties() {
       });
 
       if (error) {
-        alert(error.message);
+        toast.error(error.message);
         return;
       }
 
       setFavoriteIds((prev) => [...prev, propertyId]);
+      toast.success("Saved to favorites");
     }
   }
 
@@ -126,19 +131,19 @@ export default function Properties() {
     );
 
     if (current.includes(propertyId)) {
-      alert("This property is already in comparison.");
+      toast("Already in comparison");
       return;
     }
 
     if (current.length >= 3) {
-      alert("You can compare maximum 3 properties at once.");
+      toast.error("Maximum 3 properties");
       return;
     }
 
     const updated = [...current, propertyId];
     localStorage.setItem("compare_properties", JSON.stringify(updated));
 
-    alert("Property added to comparison.");
+    toast.success("Property added to comparison");
   }
 
   const filteredProperties = properties.filter((property) => {
@@ -182,12 +187,15 @@ export default function Properties() {
     setLocation("");
     setMinPrice("");
     setMaxPrice("");
+    toast.success("Filters reset");
   }
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <h2 className="text-xl font-semibold">Loading properties...</h2>
+      <div className="min-h-screen bg-slate-50 px-4 py-10">
+        <div className="mx-auto max-w-7xl">
+          <PropertyGridLoader />
+        </div>
       </div>
     );
   }
@@ -207,7 +215,7 @@ export default function Properties() {
 
           <Link
             to="/compare"
-            className="rounded-xl bg-purple-700 px-5 py-3 font-semibold text-white hover:bg-purple-800"
+            className="rounded-xl bg-purple-700 px-5 py-3 font-semibold text-white transition hover:-translate-y-1 hover:bg-purple-800 hover:shadow-lg"
           >
             View Compare
           </Link>
@@ -220,7 +228,7 @@ export default function Properties() {
               placeholder="Search title or description"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border p-3 outline-none transition focus:border-purple-600 focus:ring-4 focus:ring-purple-100"
             />
 
             <input
@@ -228,13 +236,13 @@ export default function Properties() {
               placeholder="Location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border p-3 outline-none transition focus:border-purple-600 focus:ring-4 focus:ring-purple-100"
             />
 
             <select
               value={propertyType}
               onChange={(e) => setPropertyType(e.target.value)}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border p-3 outline-none transition focus:border-purple-600 focus:ring-4 focus:ring-purple-100"
             >
               <option value="">All Types</option>
               <option value="sale">For Sale</option>
@@ -246,7 +254,7 @@ export default function Properties() {
               placeholder="Min Price"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border p-3 outline-none transition focus:border-purple-600 focus:ring-4 focus:ring-purple-100"
             />
 
             <input
@@ -254,13 +262,13 @@ export default function Properties() {
               placeholder="Max Price"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border p-3 outline-none transition focus:border-purple-600 focus:ring-4 focus:ring-purple-100"
             />
 
             <button
               type="button"
               onClick={resetFilters}
-              className="rounded-lg bg-gray-700 py-3 font-semibold text-white hover:bg-gray-800"
+              className="rounded-lg bg-gray-700 py-3 font-semibold text-white transition hover:-translate-y-1 hover:bg-gray-800 hover:shadow-lg"
             >
               Reset
             </button>
@@ -278,84 +286,89 @@ export default function Properties() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProperties.map((property) => {
+            {filteredProperties.map((property, index) => {
               const isSaved = favoriteIds.includes(property.id);
 
               return (
-                <Link
-                  key={property.id}
-                  to={`/properties/${property.id}`}
-                  className="relative block overflow-hidden rounded-2xl bg-white shadow transition hover:shadow-lg"
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => toggleFavorite(e, property.id)}
-                    className={`absolute right-4 top-4 z-10 rounded-full px-3 py-2 text-lg shadow ${
-                      isSaved
-                        ? "bg-red-600 text-white"
-                        : "bg-white text-gray-700"
-                    }`}
+                <AnimatedCard key={property.id} delay={index * 0.04}>
+                  <Link
+                    to={`/properties/${property.id}`}
+                    className="group relative block overflow-hidden rounded-2xl bg-white shadow transition"
                   >
-                    {isSaved ? "❤️" : "🤍"}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(e) => toggleFavorite(e, property.id)}
+                      className={`absolute right-4 top-4 z-10 rounded-full px-3 py-2 text-lg shadow transition hover:scale-110 ${
+                        isSaved
+                          ? "bg-red-600 text-white"
+                          : "bg-white text-gray-700"
+                      }`}
+                    >
+                      {isSaved ? "❤️" : "🤍"}
+                    </button>
 
-                  {property.is_featured && (
-                    <span className="absolute left-4 top-4 z-10 rounded-full bg-yellow-500 px-3 py-1 text-sm font-semibold text-white">
-                      Featured
-                    </span>
-                  )}
-
-                  {property.is_boosted && (
-                    <span className="absolute left-4 top-14 z-10 rounded-full bg-purple-700 px-3 py-1 text-sm font-semibold text-white">
-                      🚀 Boosted
-                    </span>
-                  )}
-
-                  <PropertyImage
-                    src={property.image_url}
-                    title={property.title}
-                  />
-
-                  <div className="p-5">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-sm capitalize text-blue-700">
-                        {property.type || property.property_type || "property"}
+                    {property.is_featured && (
+                      <span className="absolute left-4 top-4 z-10 rounded-full bg-yellow-500 px-3 py-1 text-sm font-semibold text-white shadow">
+                        Featured
                       </span>
+                    )}
 
-                      <span className="text-sm text-gray-500">Approved</span>
+                    {property.is_boosted && (
+                      <span className="absolute left-4 top-14 z-10 rounded-full bg-purple-700 px-3 py-1 text-sm font-semibold text-white shadow">
+                        🚀 Boosted
+                      </span>
+                    )}
+
+                    <div className="overflow-hidden">
+                      <PropertyImage
+                        src={property.image_url}
+                        title={property.title}
+                      />
                     </div>
 
-                    <h2 className="mb-2 text-xl font-bold text-gray-900">
-                      {property.title}
-                    </h2>
+                    <div className="p-5">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-sm capitalize text-blue-700">
+                          {property.type ||
+                            property.property_type ||
+                            "property"}
+                        </span>
 
-                    <p className="text-gray-500">
-                      {property.location || property.city || property.state}
-                    </p>
-
-                    <p className="mt-3 text-lg font-bold text-blue-700">
-                      ₦{Number(property.price || 0).toLocaleString()}
-                    </p>
-
-                    <p className="mt-3 line-clamp-3 text-gray-600">
-                      {property.description}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <div className="flex-1 rounded-lg bg-blue-700 py-2 text-center font-semibold text-white">
-                        View Details
+                        <span className="text-sm text-gray-500">Approved</span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => addToCompare(e, property.id)}
-                        className="flex-1 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
-                      >
-                        Compare
-                      </button>
+                      <h2 className="mb-2 text-xl font-bold text-gray-900 transition group-hover:text-purple-700">
+                        {property.title}
+                      </h2>
+
+                      <p className="text-gray-500">
+                        {property.location || property.city || property.state}
+                      </p>
+
+                      <p className="mt-3 text-lg font-bold text-blue-700">
+                        ₦{Number(property.price || 0).toLocaleString()}
+                      </p>
+
+                      <p className="mt-3 line-clamp-3 text-gray-600">
+                        {property.description}
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="flex-1 rounded-lg bg-blue-700 py-2 text-center font-semibold text-white transition group-hover:bg-purple-700">
+                          View Details
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => addToCompare(e, property.id)}
+                          className="flex-1 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800"
+                        >
+                          Compare
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </AnimatedCard>
               );
             })}
           </div>
