@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabase";
 import { getSubscriptionLimits } from "../../lib/subscriptionLimits";
+import SellerAnalyticsCharts from "../../components/SellerAnalyticsCharts";
 
 export default function SellerDashboard() {
   const [stats, setStats] = useState({
@@ -19,6 +21,7 @@ export default function SellerDashboard() {
   });
 
   const [recentProperties, setRecentProperties] = useState([]);
+  const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,9 +38,7 @@ export default function SellerDashboard() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select(
-          "verification_status, subscription_plan, subscription_expires_at"
-        )
+        .select("verification_status, subscription_plan, subscription_expires_at")
         .eq("id", user.id)
         .single();
 
@@ -58,6 +59,19 @@ export default function SellerDashboard() {
 
       if (!error && data) {
         setRecentProperties(data.slice(0, 5));
+
+        const propertyIds = data.map((p) => p.id);
+
+        if (propertyIds.length > 0) {
+          const { data: enquiryData } = await supabase
+            .from("enquiries")
+            .select("*")
+            .in("property_id", propertyIds);
+
+          setEnquiries(enquiryData || []);
+        } else {
+          setEnquiries([]);
+        }
 
         setStats({
           total: data.length,
@@ -83,8 +97,21 @@ export default function SellerDashboard() {
       ? `${stats.total} / Unlimited`
       : `${stats.total} / ${subscription.maxProperties}`;
 
+  const cardClass =
+    "rounded-2xl bg-white p-6 shadow transition duration-300 hover:-translate-y-1 hover:shadow-2xl";
+
+  const darkCardClass =
+    "rounded-2xl bg-slate-900 p-6 text-white shadow transition duration-300 hover:-translate-y-1 hover:bg-black hover:shadow-2xl";
+
+  const purpleCardClass =
+    "rounded-2xl bg-purple-700 p-6 text-white shadow transition duration-300 hover:-translate-y-1 hover:bg-purple-800 hover:shadow-2xl";
+
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45 }}
+    >
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
@@ -97,13 +124,18 @@ export default function SellerDashboard() {
 
         <Link
           to="/dashboard/seller/add-property"
-          className="rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white hover:bg-purple-800"
+          className="rounded-xl bg-purple-700 px-6 py-3 font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-purple-800 hover:shadow-xl"
         >
           Add New Property
         </Link>
       </div>
 
-      <div className="mb-8 rounded-2xl bg-white p-6 shadow">
+      <motion.div
+        className="mb-8 rounded-2xl bg-white p-6 shadow transition duration-300 hover:shadow-xl"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+      >
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div>
             <p className="text-slate-500">Current Subscription</p>
@@ -129,46 +161,48 @@ export default function SellerDashboard() {
 
           <Link
             to="/dashboard/seller/subscription"
-            className="rounded-xl bg-slate-900 px-6 py-3 text-center font-semibold text-white hover:bg-black"
+            className="rounded-xl bg-slate-900 px-6 py-3 text-center font-semibold text-white transition duration-300 hover:-translate-y-1 hover:bg-black hover:shadow-xl"
           >
             Upgrade Plan
           </Link>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="grid gap-6 md:grid-cols-5">
-        <div className="rounded-2xl bg-white p-6 shadow">
+      <motion.div
+        className="grid gap-6 md:grid-cols-5"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className={cardClass}>
           <p className="text-slate-500">Total Properties</p>
           <h2 className="mt-2 text-4xl font-bold text-slate-900">
             {stats.total}
           </h2>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className={cardClass}>
           <p className="text-slate-500">Pending</p>
           <h2 className="mt-2 text-4xl font-bold text-yellow-600">
             {stats.pending}
           </h2>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className={cardClass}>
           <p className="text-slate-500">Approved</p>
           <h2 className="mt-2 text-4xl font-bold text-green-600">
             {stats.approved}
           </h2>
         </div>
 
-        <div className="rounded-2xl bg-white p-6 shadow">
+        <div className={cardClass}>
           <p className="text-slate-500">Rejected</p>
           <h2 className="mt-2 text-4xl font-bold text-red-600">
             {stats.rejected}
           </h2>
         </div>
 
-        <Link
-          to="/dashboard/seller/verification"
-          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg"
-        >
+        <Link to="/dashboard/seller/verification" className={cardClass}>
           <p className="text-slate-500">Verification</p>
           <h2 className="mt-2 text-2xl font-bold capitalize text-purple-700">
             {stats.verificationStatus}
@@ -177,33 +211,29 @@ export default function SellerDashboard() {
             Click to update verification
           </p>
         </Link>
-      </div>
+      </motion.div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-4">
-        <Link
-          to="/dashboard/seller/properties"
-          className="rounded-2xl bg-purple-700 p-6 text-white shadow hover:bg-purple-800"
-        >
+      <motion.div
+        className="mt-8 grid gap-6 md:grid-cols-4"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <Link to="/dashboard/seller/properties" className={purpleCardClass}>
           <h3 className="text-xl font-bold">My Properties</h3>
           <p className="mt-2 text-purple-100">
             View and manage all your uploaded properties.
           </p>
         </Link>
 
-        <Link
-          to="/dashboard/seller/enquiries"
-          className="rounded-2xl bg-slate-900 p-6 text-white shadow hover:bg-black"
-        >
+        <Link to="/dashboard/seller/enquiries" className={darkCardClass}>
           <h3 className="text-xl font-bold">My Enquiries</h3>
           <p className="mt-2 text-slate-300">
             View messages from interested buyers and tenants.
           </p>
         </Link>
 
-        <Link
-          to="/dashboard/seller/verification"
-          className="rounded-2xl bg-white p-6 shadow hover:shadow-lg"
-        >
+        <Link to="/dashboard/seller/verification" className={cardClass}>
           <h3 className="text-xl font-bold text-slate-900">
             Identity Verification
           </h3>
@@ -211,26 +241,40 @@ export default function SellerDashboard() {
             Submit or update your NIN verification.
           </p>
         </Link>
-        <Link
-        to="/dashboard/seller/analytics"
-        className="rounded-2xl bg-white p-6 shadow hover:shadow-lg"
-      >
-        <h3 className="text-xl font-bold text-slate-900">Property Analytics</h3>
-        <p className="mt-2 text-slate-600">
-          Track property views, enquiries and performance.
-        </p>
-      </Link>
 
-        <Link
-          to="/dashboard/seller/subscription"
-          className="rounded-2xl bg-purple-700 p-6 text-white shadow hover:bg-purple-800"
-        >
+        <Link to="/dashboard/seller/analytics" className={cardClass}>
+          <h3 className="text-xl font-bold text-slate-900">
+            Property Analytics
+          </h3>
+          <p className="mt-2 text-slate-600">
+            Track property views, enquiries and performance.
+          </p>
+        </Link>
+
+        <Link to="/dashboard/seller/subscription" className={purpleCardClass}>
           <h3 className="text-xl font-bold">Subscription Plans</h3>
           <p className="mt-2 text-purple-100">Upgrade to Pro or Agency.</p>
         </Link>
-      </div>
+      </motion.div>
 
-      <div className="mt-10 rounded-2xl bg-white p-6 shadow">
+      <motion.div
+        className="mt-10"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <SellerAnalyticsCharts
+          properties={recentProperties}
+          enquiries={enquiries}
+        />
+      </motion.div>
+
+      <motion.div
+        className="mt-10 rounded-2xl bg-white p-6 shadow"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-xl font-bold">Recent Properties</h2>
 
@@ -295,7 +339,7 @@ export default function SellerDashboard() {
             </table>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

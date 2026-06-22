@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import MortgageCalculator from "../components/MortgageCalculator";
 import PropertyMap from "../components/PropertyMap";
+import { createNotification } from "../lib/createNotification";
 
 export default function PropertyDetails() {
   const { id } = useParams();
@@ -13,6 +14,8 @@ export default function PropertyDetails() {
   const [mainImage, setMainImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [similarProperties, setSimilarProperties] = useState([]);
+  const [recommendedProperties, setRecommendedProperties] = useState([]);
+  const [nearbyProperties, setNearbyProperties] = useState([]);
 
   const [inspection, setInspection] = useState({
     name: "",
@@ -106,6 +109,8 @@ export default function PropertyDetails() {
       setMainImage(gallery[0] || "");
 
       await loadSimilarProperties(propertyData);
+      await loadNearbyProperties(propertyData);
+      await loadRecommendedProperties(propertyData);
 
       setLoading(false);
     }
@@ -165,6 +170,48 @@ export default function PropertyDetails() {
     setSimilarProperties(fallbackData || []);
   }
 
+  async function loadNearbyProperties(propertyData) {
+       let query = supabase
+      .from("properties")
+      .select("*")
+      .neq("id", id)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (propertyData.city) {
+      query = query.eq("city", propertyData.city);
+    } else if (propertyData.state) {
+      query = query.eq("state", propertyData.state);
+    } else if (propertyData.location) {
+      query = query.ilike("location", `%${propertyData.location}%`);
+    }
+
+    const { data } = await query;
+
+    setNearbyProperties(data || []);
+  }
+
+  async function loadRecommendedProperties(propertyData) {
+  const propertyType = propertyData.type || propertyData.property_type;
+
+  let query = supabase
+    .from("properties")
+    .select("*")
+    .neq("id", id)
+    .eq("status", "approved")
+    .order("views", { ascending: false })
+    .limit(3);
+
+  if (propertyType) {
+    query = query.eq("type", propertyType);
+  }
+
+  const { data } = await query;
+
+  setRecommendedProperties(data || []);
+}
+
   function handleChange(e) {
     setEnquiry({ ...enquiry, [e.target.name]: e.target.value });
   }
@@ -191,8 +238,21 @@ export default function PropertyDetails() {
     if (error) {
       setSent(error.message);
     } else {
+      await createNotification({
+        userId: property.owner_id,
+        title: "New Property Enquiry",
+        message: `${enquiry.name} sent an enquiry for ${property.title}.`,
+        type: "enquiry",
+        link: "/dashboard/seller/enquiries",
+      });
+
       setSent("Enquiry sent successfully.");
-      setEnquiry({ name: "", email: "", phone: "", message: "" });
+      setEnquiry({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
     }
   }
 
@@ -215,8 +275,21 @@ export default function PropertyDetails() {
     if (error) {
       setInspectionMessage(error.message);
     } else {
+      await createNotification({
+        userId: property.owner_id,
+        title: "New Inspection Request",
+        message: `${inspection.name} requested an inspection for ${property.title}.`,
+        type: "inspection",
+        link: "/dashboard/seller/inspections",
+      });
+
       setInspectionMessage("Inspection request sent successfully.");
-      setInspection({ name: "", phone: "", inspection_date: "" });
+
+      setInspection({
+        name: "",
+        phone: "",
+        inspection_date: "",
+      });
     }
   }
 
@@ -240,8 +313,21 @@ export default function PropertyDetails() {
     if (error) {
       setReviewMessage(error.message);
     } else {
+      await createNotification({
+        userId: seller.id,
+        title: "New Seller Review",
+        message: `You received a ${review.rating}-star review on ${property.title}.`,
+        type: "review",
+        link: `/agent/${seller.id}`,
+      });
+
       setReviewMessage("Review submitted successfully.");
-      setReview({ rating: 5, review: "" });
+
+      setReview({
+        rating: 5,
+        review: "",
+      });
+
       await loadReviews(seller.id);
     }
   }
@@ -256,6 +342,25 @@ export default function PropertyDetails() {
   const whatsappMessage = encodeURIComponent(
     `Hello, I am interested in this property: ${property?.title || ""}`
   );
+
+  const propertyUrl = window.location.href;
+
+  function copyPropertyLink() {
+    navigator.clipboard.writeText(propertyUrl);
+    alert("Property link copied!");
+  }
+
+  function shareNative() {
+    if (navigator.share) {
+      navigator.share({
+        title: property.title,
+        text: property.description,
+        url: propertyUrl,
+      });
+    } else {
+      copyPropertyLink();
+    }
+  }
 
   if (loading) return <p className="p-10">Loading...</p>;
   if (!property) return <p className="p-10">Property not found.</p>;
@@ -338,12 +443,63 @@ export default function PropertyDetails() {
               </h1>
 
               <p className="mt-2 text-lg text-slate-600">
-                📍 {property.location || property.city || property.state || "No location"}
+                📍{" "}
+                {property.location ||
+                  property.city ||
+                  property.state ||
+                  "No location"}
               </p>
 
               <p className="mt-5 text-4xl font-extrabold text-purple-700">
                 ₦{Number(property.price || 0).toLocaleString()}
               </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `${property.title}\n${propertyUrl}`
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700"
+                >
+                  WhatsApp
+                </a>
+
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${propertyUrl}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+                >
+                  Facebook
+                </a>
+
+                <a
+                  href={`https://twitter.com/intent/tweet?url=${propertyUrl}&text=${encodeURIComponent(
+                    property.title
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white"
+                >
+                  X
+                </a>
+
+                <button
+                  onClick={copyPropertyLink}
+                  className="rounded-xl bg-purple-700 px-4 py-3 font-semibold text-white hover:bg-purple-800"
+                >
+                  Copy Link
+                </button>
+
+                <button
+                  onClick={shareNative}
+                  className="rounded-xl bg-orange-600 px-4 py-3 font-semibold text-white hover:bg-orange-700"
+                >
+                  Share
+                </button>
+              </div>
             </section>
 
             <section className="rounded-3xl bg-white p-6 shadow">
@@ -429,7 +585,60 @@ export default function PropertyDetails() {
               </section>
             )}
 
-            <MortgageCalculator propertyPrice={property.price} />
+            <section className="rounded-3xl bg-white p-6 shadow">
+              <h2 className="mb-4 text-2xl font-bold text-slate-900">
+                Send Enquiry
+              </h2>
+
+              {sent && (
+                <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">
+                  {sent}
+                </div>
+              )}
+
+              <form onSubmit={submitEnquiry} className="space-y-4">
+                <input
+                  name="name"
+                  value={enquiry.name}
+                  onChange={handleChange}
+                  placeholder="Your name"
+                  className="w-full rounded-xl border p-3"
+                  required
+                />
+
+                <input
+                  name="email"
+                  value={enquiry.email}
+                  onChange={handleChange}
+                  placeholder="Your email"
+                  type="email"
+                  className="w-full rounded-xl border p-3"
+                  required
+                />
+
+                <input
+                  name="phone"
+                  value={enquiry.phone}
+                  onChange={handleChange}
+                  placeholder="Your phone number"
+                  className="w-full rounded-xl border p-3"
+                  required
+                />
+
+                <textarea
+                  name="message"
+                  value={enquiry.message}
+                  onChange={handleChange}
+                  placeholder="Your message"
+                  className="h-32 w-full rounded-xl border p-3"
+                  required
+                />
+
+                <button className="w-full rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800">
+                  Send Enquiry
+                </button>
+              </form>
+            </section>
 
             <section className="rounded-3xl bg-white p-6 shadow">
               <h2 className="mb-4 text-2xl font-bold text-slate-900">
@@ -477,6 +686,8 @@ export default function PropertyDetails() {
                 </button>
               </form>
             </section>
+
+            <MortgageCalculator propertyPrice={property.price} />
 
             {seller && (
               <section className="rounded-3xl bg-white p-6 shadow">
@@ -549,68 +760,112 @@ export default function PropertyDetails() {
                 )}
               </section>
             )}
-
-            <section className="rounded-3xl bg-white p-6 shadow">
-              <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                Send Enquiry
-              </h2>
-
-              {sent && (
-                <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">
-                  {sent}
-                </div>
-              )}
-
-              <form onSubmit={submitEnquiry} className="space-y-4">
-                <input
-                  name="name"
-                  value={enquiry.name}
-                  onChange={handleChange}
-                  placeholder="Your name"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  name="email"
-                  value={enquiry.email}
-                  onChange={handleChange}
-                  placeholder="Your email"
-                  type="email"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  name="phone"
-                  value={enquiry.phone}
-                  onChange={handleChange}
-                  placeholder="Your phone number"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <textarea
-                  name="message"
-                  value={enquiry.message}
-                  onChange={handleChange}
-                  placeholder="Your message"
-                  className="h-32 w-full rounded-xl border p-3"
-                  required
-                />
-
-                <button className="w-full rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800">
-                  Send Enquiry
-                </button>
-              </form>
-            </section>
           </aside>
         </div>
 
-        {similarProperties.length > 0 && (
+        {nearbyProperties.length > 0 && (
           <section>
             <h2 className="mb-6 text-2xl font-bold text-slate-900">
-              ⭐ You May Also Like
+              🏘 Nearby Properties
+            </h2>
+
+            <div className="grid gap-6 md:grid-cols-3">
+              {nearbyProperties.map((item) => (
+                <div
+                  key={item.id}
+                  className="overflow-hidden rounded-3xl bg-white shadow"
+                >
+                  {item.image_url ? (
+                    <img
+                      src={item.image_url}
+                      alt={item.title}
+                      className="h-52 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-52 w-full items-center justify-center bg-slate-200 text-slate-500">
+                      No Image Available
+                    </div>
+                  )}
+
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-2 text-slate-600">
+                      {item.location || item.city || item.state || "No location"}
+                    </p>
+
+                    <p className="mt-3 text-2xl font-bold text-purple-700">
+                      ₦{Number(item.price || 0).toLocaleString()}
+                    </p>
+
+                    <Link
+                      to={`/properties/${item.id}`}
+                      className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
+                    >
+                      View Property
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {similarProperties.length > 0 && (
+          <section>
+            {recommendedProperties.length > 0 && (
+  <section>
+    <h2 className="mb-6 text-2xl font-bold text-slate-900">
+      🤖 Recommended For You
+    </h2>
+
+    <div className="grid gap-6 md:grid-cols-3">
+      {recommendedProperties.map((item) => (
+        <div
+          key={item.id}
+          className="overflow-hidden rounded-3xl bg-white shadow"
+        >
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={item.title}
+              className="h-52 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-52 items-center justify-center bg-slate-200 text-slate-500">
+              No Image Available
+            </div>
+          )}
+
+          <div className="p-5">
+            <h3 className="text-lg font-bold text-slate-900">
+              {item.title}
+            </h3>
+
+            <p className="mt-2 text-slate-600">
+              {item.location || item.city || item.state}
+            </p>
+
+            <p className="mt-3 text-2xl font-bold text-purple-700">
+              ₦{Number(item.price || 0).toLocaleString()}
+            </p>
+
+            <Link
+              to={`/properties/${item.id}`}
+              className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
+            >
+              View Property
+            </Link>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+            <h2 className="mb-6 text-2xl font-bold text-slate-900">
+              ✨ Similar Properties You May Like
             </h2>
 
             <div className="grid gap-6 md:grid-cols-3">

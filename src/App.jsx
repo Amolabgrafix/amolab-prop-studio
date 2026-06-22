@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { AnimatePresence, motion } from "framer-motion";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -13,6 +15,8 @@ import RecentlyViewed from "./pages/RecentlyViewed";
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./dashboard/DashboardHome";
 import Favorites from "./dashboard/Favorites";
+import NotificationsCenter from "./dashboard/NotificationsCenter";
+import PropertyAlerts from "./dashboard/PropertyAlerts";
 
 import AdminDashboard from "./dashboard/admin/AdminDashboard";
 import AdminUsers from "./dashboard/admin/AdminUsers";
@@ -37,32 +41,113 @@ import SellerInspections from "./dashboard/seller/SellerInspections";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
-function App() {
+function PageWrapper({ children }) {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Pages */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -12 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-        {/* Public Properties */}
-        <Route path="/properties" element={<Properties />} />
-        <Route path="/properties/:id" element={<PropertyDetails />} />
-        <Route path="/agent/:id" element={<AgentProfile />} />
-        <Route path="/compare" element={<CompareProperties />} />
+function AnimatedRoutes() {
+  const location = useLocation();
 
-        {/* Payment Success Routes */}
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={
+            <PageWrapper>
+              <Home />
+            </PageWrapper>
+          }
+        />
 
-        {/* Dashboard */}
+        <Route
+          path="/login"
+          element={
+            <PageWrapper>
+              <Login />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/register"
+          element={
+            <PageWrapper>
+              <Register />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/properties"
+          element={
+            <PageWrapper>
+              <Properties />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/properties/:id"
+          element={
+            <PageWrapper>
+              <PropertyDetails />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/agent/:id"
+          element={
+            <PageWrapper>
+              <AgentProfile />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/compare"
+          element={
+            <PageWrapper>
+              <CompareProperties />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/payment/success"
+          element={
+            <PageWrapper>
+              <PaymentSuccess />
+            </PageWrapper>
+          }
+        />
+
+        <Route
+          path="/payment-success"
+          element={
+            <PageWrapper>
+              <PaymentSuccess />
+            </PageWrapper>
+          }
+        />
+
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="favorites" element={<Favorites />} />
           <Route path="recently-viewed" element={<RecentlyViewed />} />
+          <Route path="notifications" element={<NotificationsCenter />} />
+          <Route path="property-alerts" element={<PropertyAlerts />} />
 
-          {/* Seller Pages */}
           <Route path="seller" element={<SellerDashboard />} />
           <Route path="seller/properties" element={<SellerProperties />} />
           <Route path="seller/add-property" element={<AddProperty />} />
@@ -73,7 +158,6 @@ function App() {
           <Route path="seller/analytics" element={<SellerAnalytics />} />
           <Route path="seller/inspections" element={<SellerInspections />} />
 
-          {/* Admin Pages */}
           <Route
             path="admin"
             element={
@@ -165,18 +249,28 @@ function App() {
           />
         </Route>
 
-        {/* 404 */}
         <Route
           path="*"
           element={
-            <div className="flex min-h-screen items-center justify-center bg-slate-100">
-              <h1 className="text-3xl font-bold text-purple-700">
-                Page Not Found
-              </h1>
-            </div>
+            <PageWrapper>
+              <div className="flex min-h-screen items-center justify-center bg-slate-100">
+                <h1 className="text-3xl font-bold text-purple-700">
+                  Page Not Found
+                </h1>
+              </div>
+            </PageWrapper>
           }
         />
       </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AnimatedRoutes />
+      <Toaster position="top-right" />
     </BrowserRouter>
   );
 }
