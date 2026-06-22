@@ -8,6 +8,8 @@ export default function AddProperty() {
     price: "",
     type: "",
     description: "",
+    latitude: "",
+    longitude: "",
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -52,8 +54,7 @@ export default function AddProperty() {
         imageUrl = publicUrlData.publicUrl;
       }
 
-      const { error } = await supabase.from("properties")
-      .insert({
+      const { error } = await supabase.from("properties").insert({
         title: form.title,
         location: form.location,
         address: form.location,
@@ -62,6 +63,8 @@ export default function AddProperty() {
         listing_type: form.type,
         description: form.description,
         image_url: imageUrl,
+        latitude: form.latitude ? Number(form.latitude) : null,
+        longitude: form.longitude ? Number(form.longitude) : null,
         owner_id: user.id,
         status: "pending",
       });
@@ -69,13 +72,17 @@ export default function AddProperty() {
       if (error) throw error;
 
       setMessage("Property uploaded successfully. Waiting for admin approval.");
+
       setForm({
         title: "",
         location: "",
         price: "",
         type: "",
         description: "",
+        latitude: "",
+        longitude: "",
       });
+
       setImageFile(null);
     } catch (error) {
       console.log("FULL ADD PROPERTY ERROR:", error);
@@ -154,6 +161,38 @@ export default function AddProperty() {
             className="w-full border p-3 rounded h-32"
             required
           />
+
+          <div className="rounded-xl border bg-slate-50 p-4">
+            <h2 className="mb-2 font-bold text-slate-900">
+              Map Coordinates
+            </h2>
+
+            <p className="mb-3 text-sm text-slate-500">
+              Enter latitude and longitude so the property can show on the map.
+            </p>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                name="latitude"
+                value={form.latitude}
+                onChange={handleChange}
+                placeholder="Latitude e.g. 6.5244"
+                type="number"
+                step="any"
+                className="w-full border p-3 rounded"
+              />
+
+              <input
+                name="longitude"
+                value={form.longitude}
+                onChange={handleChange}
+                placeholder="Longitude e.g. 3.3792"
+                type="number"
+                step="any"
+                className="w-full border p-3 rounded"
+              />
+            </div>
+          </div>
 
           <input
             type="file"

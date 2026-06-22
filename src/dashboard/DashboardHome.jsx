@@ -38,6 +38,15 @@ export default function DashboardHome() {
           <h2 className="text-xl font-bold">Browse Public Properties</h2>
           <p className="mt-2 text-slate-300">See approved public listings.</p>
         </Link>
+              <Link
+            to="/dashboard/recently-viewed"
+            className="rounded-2xl bg-white p-6 shadow hover:shadow-lg transition"
+          >
+            <h2 className="text-xl font-bold">👁 Recently Viewed</h2>
+            <p className="mt-2 text-slate-600">
+              View properties you recently visited.
+            </p>
+          </Link>
       </div>
 
       <div className="mt-10">
@@ -58,6 +67,7 @@ export default function DashboardHome() {
             <h2 className="text-xl font-bold text-slate-900">Manage Properties</h2>
             <p className="mt-2 text-slate-600">Approve or reject property listings.</p>
           </Link>
+    
         </div>
       </div>
     </div>

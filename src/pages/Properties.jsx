@@ -117,6 +117,30 @@ export default function Properties() {
     }
   }
 
+  function addToCompare(e, propertyId) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const current = JSON.parse(
+      localStorage.getItem("compare_properties") || "[]"
+    );
+
+    if (current.includes(propertyId)) {
+      alert("This property is already in comparison.");
+      return;
+    }
+
+    if (current.length >= 3) {
+      alert("You can compare maximum 3 properties at once.");
+      return;
+    }
+
+    const updated = [...current, propertyId];
+    localStorage.setItem("compare_properties", JSON.stringify(updated));
+
+    alert("Property added to comparison.");
+  }
+
   const filteredProperties = properties.filter((property) => {
     const searchText = search.toLowerCase();
     const locationText = location.toLowerCase();
@@ -171,13 +195,22 @@ export default function Properties() {
   return (
     <div className="min-h-screen bg-gray-100 px-4 py-10">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Available Properties
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Search and browse approved properties on Amolab Prop Studio.
-          </p>
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Available Properties
+            </h1>
+            <p className="mt-2 text-gray-600">
+              Search and browse approved properties on Amolab Prop Studio.
+            </p>
+          </div>
+
+          <Link
+            to="/compare"
+            className="rounded-xl bg-purple-700 px-5 py-3 font-semibold text-white hover:bg-purple-800"
+          >
+            View Compare
+          </Link>
         </div>
 
         <div className="mb-8 rounded-2xl bg-white p-5 shadow">
@@ -308,8 +341,18 @@ export default function Properties() {
                       {property.description}
                     </p>
 
-                    <div className="mt-4 w-full rounded-lg bg-blue-700 py-2 text-center font-semibold text-white">
-                      View Details
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <div className="flex-1 rounded-lg bg-blue-700 py-2 text-center font-semibold text-white">
+                        View Details
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => addToCompare(e, property.id)}
+                        className="flex-1 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800"
+                      >
+                        Compare
+                      </button>
                     </div>
                   </div>
                 </Link>

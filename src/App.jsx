@@ -6,6 +6,9 @@ import Register from "./pages/Register";
 import Properties from "./pages/Properties";
 import PropertyDetails from "./pages/PropertyDetails";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import AgentProfile from "./pages/AgentProfile";
+import CompareProperties from "./pages/CompareProperties";
+import RecentlyViewed from "./pages/RecentlyViewed";
 
 import DashboardLayout from "./layouts/DashboardLayout";
 import DashboardHome from "./dashboard/DashboardHome";
@@ -20,6 +23,7 @@ import AdminDesignRequests from "./dashboard/admin/AdminDesignRequests";
 import AdminPayments from "./dashboard/admin/AdminPayments";
 import AdminRevenue from "./dashboard/admin/AdminRevenue";
 import AdminAnalytics from "./dashboard/admin/AdminAnalytics";
+import AdminInspections from "./dashboard/admin/AdminInspections";
 
 import AddProperty from "./dashboard/seller/AddProperty";
 import SellerDashboard from "./dashboard/seller/SellerDashboard";
@@ -29,6 +33,7 @@ import SellerEnquiries from "./dashboard/seller/SellerEnquiries";
 import SellerPayments from "./dashboard/seller/SellerPayments";
 import SubscriptionPlans from "./dashboard/seller/SubscriptionPlans";
 import SellerAnalytics from "./dashboard/seller/SellerAnalytics";
+import SellerInspections from "./dashboard/seller/SellerInspections";
 
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
@@ -41,18 +46,21 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Payment Success Routes */}
-        <Route path="/payment/success" element={<PaymentSuccess />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-
         {/* Public Properties */}
         <Route path="/properties" element={<Properties />} />
         <Route path="/properties/:id" element={<PropertyDetails />} />
+        <Route path="/agent/:id" element={<AgentProfile />} />
+        <Route path="/compare" element={<CompareProperties />} />
+
+        {/* Payment Success Routes */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
 
         {/* Dashboard */}
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="favorites" element={<Favorites />} />
+          <Route path="recently-viewed" element={<RecentlyViewed />} />
 
           {/* Seller Pages */}
           <Route path="seller" element={<SellerDashboard />} />
@@ -63,7 +71,7 @@ function App() {
           <Route path="seller/payments" element={<SellerPayments />} />
           <Route path="seller/subscription" element={<SubscriptionPlans />} />
           <Route path="seller/analytics" element={<SellerAnalytics />} />
-
+          <Route path="seller/inspections" element={<SellerInspections />} />
 
           {/* Admin Pages */}
           <Route
@@ -139,6 +147,15 @@ function App() {
           />
 
           <Route
+            path="admin/inspections"
+            element={
+              <ProtectedAdminRoute>
+                <AdminInspections />
+              </ProtectedAdminRoute>
+            }
+          />
+
+          <Route
             path="admin/analytics"
             element={
               <ProtectedAdminRoute>
@@ -152,7 +169,7 @@ function App() {
         <Route
           path="*"
           element={
-            <div className="min-h-screen flex items-center justify-center bg-slate-100">
+            <div className="flex min-h-screen items-center justify-center bg-slate-100">
               <h1 className="text-3xl font-bold text-purple-700">
                 Page Not Found
               </h1>
