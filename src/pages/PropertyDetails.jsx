@@ -1,9 +1,55 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
 import MortgageCalculator from "../components/MortgageCalculator";
 import PropertyMap from "../components/PropertyMap";
 import { createNotification } from "../lib/createNotification";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 26 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: "easeOut" } },
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+};
+
+function PropertyMiniCard({ item }) {
+  return (
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ y: -8, scale: 1.01 }}
+      className="overflow-hidden rounded-3xl bg-white shadow-xl"
+    >
+      {item.image_url ? (
+        <img src={item.image_url} alt={item.title} className="h-52 w-full object-cover" />
+      ) : (
+        <div className="flex h-52 items-center justify-center bg-slate-200 text-slate-500">
+          No Image Available
+        </div>
+      )}
+
+      <div className="p-5">
+        <h3 className="line-clamp-1 text-lg font-black text-slate-900">{item.title}</h3>
+        <p className="mt-2 line-clamp-1 text-slate-600">
+          📍 {item.location || item.city || item.state || "No location"}
+        </p>
+        <p className="mt-3 text-2xl font-black text-purple-700">
+          ₦{Number(item.price || 0).toLocaleString()}
+        </p>
+        <Link
+          to={`/properties/${item.id}`}
+          className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-bold text-white hover:bg-purple-800"
+        >
+          View Property
+        </Link>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function PropertyDetails() {
   const { id } = useParams();
@@ -12,7 +58,9 @@ export default function PropertyDetails() {
   const [seller, setSeller] = useState(null);
   const [images, setImages] = useState([]);
   const [mainImage, setMainImage] = useState("");
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const [similarProperties, setSimilarProperties] = useState([]);
   const [recommendedProperties, setRecommendedProperties] = useState([]);
   const [nearbyProperties, setNearbyProperties] = useState([]);
@@ -60,7 +108,6 @@ export default function PropertyDetails() {
       }
 
       const newViews = Number(propertyData.views || 0) + 1;
-
       await supabase.from("properties").update({ views: newViews }).eq("id", id);
 
       const { data: userData } = await supabase.auth.getUser();
@@ -148,9 +195,7 @@ export default function PropertyDetails() {
       .order("created_at", { ascending: false })
       .limit(3);
 
-    if (propertyType) {
-      query = query.eq("type", propertyType);
-    }
+    if (propertyType) query = query.eq("type", propertyType);
 
     const { data: similarData } = await query;
 
@@ -171,7 +216,7 @@ export default function PropertyDetails() {
   }
 
   async function loadNearbyProperties(propertyData) {
-       let query = supabase
+    let query = supabase
       .from("properties")
       .select("*")
       .neq("id", id)
@@ -188,29 +233,25 @@ export default function PropertyDetails() {
     }
 
     const { data } = await query;
-
     setNearbyProperties(data || []);
   }
 
   async function loadRecommendedProperties(propertyData) {
-  const propertyType = propertyData.type || propertyData.property_type;
+    const propertyType = propertyData.type || propertyData.property_type;
 
-  let query = supabase
-    .from("properties")
-    .select("*")
-    .neq("id", id)
-    .eq("status", "approved")
-    .order("views", { ascending: false })
-    .limit(3);
+    let query = supabase
+      .from("properties")
+      .select("*")
+      .neq("id", id)
+      .eq("status", "approved")
+      .order("views", { ascending: false })
+      .limit(3);
 
-  if (propertyType) {
-    query = query.eq("type", propertyType);
+    if (propertyType) query = query.eq("type", propertyType);
+
+    const { data } = await query;
+    setRecommendedProperties(data || []);
   }
-
-  const { data } = await query;
-
-  setRecommendedProperties(data || []);
-}
 
   function handleChange(e) {
     setEnquiry({ ...enquiry, [e.target.name]: e.target.value });
@@ -226,6 +267,7 @@ export default function PropertyDetails() {
 
   async function submitEnquiry(e) {
     e.preventDefault();
+    setSent("");
 
     const { error } = await supabase.from("enquiries").insert({
       property_id: id,
@@ -237,6 +279,7 @@ export default function PropertyDetails() {
 
     if (error) {
       setSent(error.message);
+      toast.error(error.message);
     } else {
       await createNotification({
         userId: property.owner_id,
@@ -247,12 +290,8 @@ export default function PropertyDetails() {
       });
 
       setSent("Enquiry sent successfully.");
-      setEnquiry({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
-      });
+      toast.success("Enquiry sent successfully.");
+      setEnquiry({ name: "", email: "", phone: "", message: "" });
     }
   }
 
@@ -274,6 +313,7 @@ export default function PropertyDetails() {
 
     if (error) {
       setInspectionMessage(error.message);
+      toast.error(error.message);
     } else {
       await createNotification({
         userId: property.owner_id,
@@ -284,18 +324,13 @@ export default function PropertyDetails() {
       });
 
       setInspectionMessage("Inspection request sent successfully.");
-
-      setInspection({
-        name: "",
-        phone: "",
-        inspection_date: "",
-      });
+      toast.success("Inspection request sent successfully.");
+      setInspection({ name: "", phone: "", inspection_date: "" });
     }
   }
 
   async function submitReview(e) {
     e.preventDefault();
-
     if (!seller) return;
 
     setReviewMessage("");
@@ -312,6 +347,7 @@ export default function PropertyDetails() {
 
     if (error) {
       setReviewMessage(error.message);
+      toast.error(error.message);
     } else {
       await createNotification({
         userId: seller.id,
@@ -322,12 +358,8 @@ export default function PropertyDetails() {
       });
 
       setReviewMessage("Review submitted successfully.");
-
-      setReview({
-        rating: 5,
-        review: "",
-      });
-
+      toast.success("Review submitted successfully.");
+      setReview({ rating: 5, review: "" });
       await loadReviews(seller.id);
     }
   }
@@ -347,11 +379,11 @@ export default function PropertyDetails() {
 
   function copyPropertyLink() {
     navigator.clipboard.writeText(propertyUrl);
-    alert("Property link copied!");
+    toast.success("Property link copied!");
   }
 
   function shareNative() {
-    if (navigator.share) {
+    if (navigator.share && property) {
       navigator.share({
         title: property.title,
         text: property.description,
@@ -362,29 +394,81 @@ export default function PropertyDetails() {
     }
   }
 
-  if (loading) return <p className="p-10">Loading...</p>;
-  if (!property) return <p className="p-10">Property not found.</p>;
+  function getSellerName() {
+    return (
+      seller?.agency_name ||
+      seller?.fullname ||
+      seller?.username ||
+      "Property Owner"
+    );
+  }
+
+  function getLocation() {
+    return property?.location || property?.city || property?.state || "No location";
+  }
+
+  function getPropertyType() {
+    return property?.type || property?.property_type || "Property";
+  }
+
+  function formatPrice(price) {
+    return `₦${Number(price || 0).toLocaleString()}`;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="space-y-4">
+          <div className="h-5 w-40 animate-pulse rounded bg-slate-300" />
+          <div className="h-5 w-64 animate-pulse rounded bg-slate-300" />
+          <div className="h-5 w-52 animate-pulse rounded bg-slate-300" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="rounded-3xl bg-white p-10 shadow-xl">
+          <h1 className="text-3xl font-bold text-red-600">Property not found</h1>
+          <Link
+            to="/properties"
+            className="mt-6 inline-block rounded-2xl bg-purple-700 px-6 py-4 font-bold text-white"
+          >
+            Back To Properties
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 px-4 py-8">
       <div className="mx-auto max-w-7xl space-y-8">
-        <div className="overflow-hidden rounded-3xl bg-white shadow">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          className="overflow-hidden rounded-[2rem] bg-white shadow-2xl"
+        >
           <div className="relative">
             {mainImage ? (
-              <img
+              <motion.img
                 src={mainImage}
                 alt={property.title}
-                className="h-[430px] w-full object-cover"
+                onClick={() => setLightboxOpen(true)}
+                className="h-[430px] w-full cursor-pointer object-cover md:h-[520px]"
               />
             ) : (
-              <div className="flex h-[430px] w-full items-center justify-center bg-slate-200 text-slate-500">
+              <div className="flex h-[430px] w-full items-center justify-center bg-slate-200 text-slate-500 md:h-[520px]">
                 No Image Available
               </div>
             )}
 
             <div className="absolute left-5 top-5 flex flex-wrap gap-2">
               <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-bold capitalize text-purple-700 shadow">
-                {property.type || property.property_type || "Property"}
+                {getPropertyType()}
               </span>
 
               {property.is_featured && (
@@ -398,6 +482,10 @@ export default function PropertyDetails() {
                   🚀 Boosted
                 </span>
               )}
+            </div>
+
+            <div className="absolute bottom-5 right-5 rounded-full bg-black/60 px-5 py-2 text-white backdrop-blur">
+              👁 {property.views || 0} views
             </div>
           </div>
 
@@ -423,97 +511,87 @@ export default function PropertyDetails() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         <div className="grid gap-8 lg:grid-cols-3">
           <main className="space-y-8 lg:col-span-2">
-            <section className="rounded-3xl bg-white p-6 shadow">
+            <motion.section
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+            >
               <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-600">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">
                   👁 {property.views || 0} views
                 </span>
 
-                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-semibold text-purple-700">
+                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-bold capitalize text-purple-700">
                   {property.status || "approved"}
                 </span>
               </div>
 
-              <h1 className="mt-4 text-3xl font-bold text-slate-900 md:text-4xl">
+              <h1 className="mt-4 text-3xl font-black text-slate-900 md:text-5xl">
                 {property.title}
               </h1>
 
-              <p className="mt-2 text-lg text-slate-600">
-                📍{" "}
-                {property.location ||
-                  property.city ||
-                  property.state ||
-                  "No location"}
+              <p className="mt-3 text-lg text-slate-600">📍 {getLocation()}</p>
+
+              <p className="mt-6 text-4xl font-black text-purple-700 md:text-5xl">
+                {formatPrice(property.price)}
               </p>
 
-              <p className="mt-5 text-4xl font-extrabold text-purple-700">
-                ₦{Number(property.price || 0).toLocaleString()}
-              </p>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <button
+                  onClick={shareNative}
+                  className="rounded-xl bg-orange-600 px-5 py-3 font-bold text-white hover:bg-orange-700"
+                >
+                  🔗 Share
+                </button>
 
-              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  onClick={copyPropertyLink}
+                  className="rounded-xl bg-purple-700 px-5 py-3 font-bold text-white hover:bg-purple-800"
+                >
+                  Copy Link
+                </button>
+
                 <a
                   href={`https://wa.me/?text=${encodeURIComponent(
                     `${property.title}\n${propertyUrl}`
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700"
+                  className="rounded-xl bg-green-600 px-5 py-3 font-bold text-white hover:bg-green-700"
                 >
                   WhatsApp
                 </a>
-
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${propertyUrl}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
-                >
-                  Facebook
-                </a>
-
-                <a
-                  href={`https://twitter.com/intent/tweet?url=${propertyUrl}&text=${encodeURIComponent(
-                    property.title
-                  )}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-xl bg-slate-900 px-4 py-3 font-semibold text-white"
-                >
-                  X
-                </a>
-
-                <button
-                  onClick={copyPropertyLink}
-                  className="rounded-xl bg-purple-700 px-4 py-3 font-semibold text-white hover:bg-purple-800"
-                >
-                  Copy Link
-                </button>
-
-                <button
-                  onClick={shareNative}
-                  className="rounded-xl bg-orange-600 px-4 py-3 font-semibold text-white hover:bg-orange-700"
-                >
-                  Share
-                </button>
               </div>
-            </section>
+            </motion.section>
 
-            <section className="rounded-3xl bg-white p-6 shadow">
-              <h2 className="text-2xl font-bold text-slate-900">
+            <motion.section
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+            >
+              <h2 className="text-3xl font-black text-slate-900">
                 Property Description
               </h2>
-
-              <p className="mt-4 leading-8 text-slate-700">
+              <p className="mt-5 leading-8 text-slate-700">
                 {property.description || "No description provided."}
               </p>
-            </section>
+            </motion.section>
 
-            <section className="rounded-3xl bg-white p-6 shadow">
-              <h2 className="mb-4 text-2xl font-bold text-slate-900">
+            <motion.section
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+            >
+              <h2 className="mb-5 text-3xl font-black text-slate-900">
                 Location Map
               </h2>
 
@@ -521,37 +599,37 @@ export default function PropertyDetails() {
                 latitude={property.latitude}
                 longitude={property.longitude}
                 title={property.title}
-                location={property.location || property.city || property.state}
+                location={getLocation()}
               />
-            </section>
+            </motion.section>
           </main>
 
           <aside className="space-y-6">
             {seller && (
-              <section className="rounded-3xl bg-white p-6 shadow">
-                <h2 className="text-2xl font-bold text-slate-900">
-                  Seller Information
-                </h2>
+              <motion.section
+                variants={fadeUp}
+                initial="hidden"
+                animate="show"
+                className="sticky top-24 rounded-[2rem] bg-white p-6 shadow-xl"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-purple-700 text-3xl font-black text-white">
+                    {getSellerName()?.[0]?.toUpperCase()}
+                  </div>
 
-                <div className="mt-4 rounded-2xl bg-yellow-50 p-4">
-                  <p className="text-xl font-bold text-yellow-700">
-                    ⭐ {averageRating} / 5
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    {reviews.length} review(s)
-                  </p>
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900">
+                      {getSellerName()}
+                    </h2>
+                    <p className="mt-1 font-bold text-yellow-600">
+                      ⭐ {averageRating} / 5
+                    </p>
+                    <p className="text-sm text-slate-500">{reviews.length} review(s)</p>
+                  </div>
                 </div>
 
-                <p className="mt-4 text-slate-700">
-                  <strong>Name:</strong>{" "}
-                  {seller.agency_name ||
-                    seller.fullname ||
-                    seller.username ||
-                    "Property Owner"}
-                </p>
-
                 {seller.verification_status === "approved" && (
-                  <p className="mt-3 inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+                  <p className="mt-4 inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
                     ✅ Verified Agent
                   </p>
                 )}
@@ -559,7 +637,7 @@ export default function PropertyDetails() {
                 {seller.phone && (
                   <a
                     href={`tel:${seller.phone}`}
-                    className="mt-5 block rounded-xl bg-blue-600 px-4 py-3 text-center font-semibold text-white hover:bg-blue-700"
+                    className="mt-6 block rounded-xl bg-blue-600 px-4 py-3 text-center font-bold text-white hover:bg-blue-700"
                   >
                     📞 Call Seller
                   </a>
@@ -570,7 +648,7 @@ export default function PropertyDetails() {
                     href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-3 block rounded-xl bg-green-600 px-4 py-3 text-center font-semibold text-white hover:bg-green-700"
+                    className="mt-3 block rounded-xl bg-green-600 px-4 py-3 text-center font-bold text-white hover:bg-green-700"
                   >
                     💬 Chat on WhatsApp
                   </a>
@@ -578,340 +656,175 @@ export default function PropertyDetails() {
 
                 <Link
                   to={`/agent/${seller.id}`}
-                  className="mt-3 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
+                  className="mt-3 block rounded-xl bg-purple-700 px-4 py-3 text-center font-bold text-white hover:bg-purple-800"
                 >
                   👤 View Agent Profile
                 </Link>
-              </section>
-            )}
-
-            <section className="rounded-3xl bg-white p-6 shadow">
-              <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                Send Enquiry
-              </h2>
-
-              {sent && (
-                <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">
-                  {sent}
-                </div>
-              )}
-
-              <form onSubmit={submitEnquiry} className="space-y-4">
-                <input
-                  name="name"
-                  value={enquiry.name}
-                  onChange={handleChange}
-                  placeholder="Your name"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  name="email"
-                  value={enquiry.email}
-                  onChange={handleChange}
-                  placeholder="Your email"
-                  type="email"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  name="phone"
-                  value={enquiry.phone}
-                  onChange={handleChange}
-                  placeholder="Your phone number"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <textarea
-                  name="message"
-                  value={enquiry.message}
-                  onChange={handleChange}
-                  placeholder="Your message"
-                  className="h-32 w-full rounded-xl border p-3"
-                  required
-                />
-
-                <button className="w-full rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800">
-                  Send Enquiry
-                </button>
-              </form>
-            </section>
-
-            <section className="rounded-3xl bg-white p-6 shadow">
-              <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                Schedule Inspection
-              </h2>
-
-              {inspectionMessage && (
-                <div className="mb-4 rounded-xl bg-green-100 p-3 text-green-700">
-                  {inspectionMessage}
-                </div>
-              )}
-
-              <form onSubmit={submitInspection} className="space-y-4">
-                <input
-                  type="text"
-                  name="name"
-                  value={inspection.name}
-                  onChange={handleInspectionChange}
-                  placeholder="Your name"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  type="text"
-                  name="phone"
-                  value={inspection.phone}
-                  onChange={handleInspectionChange}
-                  placeholder="Your phone number"
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <input
-                  type="datetime-local"
-                  name="inspection_date"
-                  value={inspection.inspection_date}
-                  onChange={handleInspectionChange}
-                  className="w-full rounded-xl border p-3"
-                  required
-                />
-
-                <button className="w-full rounded-xl bg-purple-700 px-4 py-3 font-semibold text-white hover:bg-purple-800">
-                  Schedule Inspection
-                </button>
-              </form>
-            </section>
-
-            <MortgageCalculator propertyPrice={property.price} />
-
-            {seller && (
-              <section className="rounded-3xl bg-white p-6 shadow">
-                <h2 className="mb-4 text-2xl font-bold text-slate-900">
-                  Leave Seller Review
-                </h2>
-
-                {reviewMessage && (
-                  <div className="mb-4 rounded-xl bg-green-100 p-3 text-green-700">
-                    {reviewMessage}
-                  </div>
-                )}
-
-                <form onSubmit={submitReview} className="space-y-4">
-                  <select
-                    name="rating"
-                    value={review.rating}
-                    onChange={handleReviewChange}
-                    className="w-full rounded-xl border p-3"
-                    required
-                  >
-                    <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
-                    <option value="4">⭐⭐⭐⭐ 4 Stars</option>
-                    <option value="3">⭐⭐⭐ 3 Stars</option>
-                    <option value="2">⭐⭐ 2 Stars</option>
-                    <option value="1">⭐ 1 Star</option>
-                  </select>
-
-                  <textarea
-                    name="review"
-                    value={review.review}
-                    onChange={handleReviewChange}
-                    placeholder="Write your review about this seller..."
-                    className="h-28 w-full rounded-xl border p-3"
-                    required
-                  />
-
-                  <button className="w-full rounded-xl bg-yellow-600 px-4 py-3 font-semibold text-white hover:bg-yellow-700">
-                    Submit Review
-                  </button>
-                </form>
-
-                {reviews.length > 0 && (
-                  <div className="mt-6 border-t pt-5">
-                    <h3 className="mb-3 text-lg font-bold text-slate-900">
-                      Recent Reviews
-                    </h3>
-
-                    <div className="space-y-3">
-                      {reviews.slice(0, 3).map((item) => (
-                        <div
-                          key={item.id}
-                          className="rounded-2xl bg-slate-50 p-4"
-                        >
-                          <p className="font-semibold text-yellow-600">
-                            {"⭐".repeat(Number(item.rating || 0))}
-                          </p>
-
-                          <p className="mt-2 text-sm text-slate-700">
-                            {item.review}
-                          </p>
-
-                          <p className="mt-2 text-xs text-slate-400">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
+              </motion.section>
             )}
           </aside>
         </div>
 
-        {nearbyProperties.length > 0 && (
-          <section>
-            <h2 className="mb-6 text-2xl font-bold text-slate-900">
-              🏘 Nearby Properties
+        <div className="grid gap-8 lg:grid-cols-3">
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-2xl font-black text-slate-900">Send Enquiry</h2>
+
+            {sent && <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">{sent}</div>}
+
+            <form onSubmit={submitEnquiry} className="space-y-4">
+              <input name="name" value={enquiry.name} onChange={handleChange} placeholder="Your name" className="w-full rounded-xl border p-3" required />
+              <input name="email" value={enquiry.email} onChange={handleChange} placeholder="Your email" type="email" className="w-full rounded-xl border p-3" required />
+              <input name="phone" value={enquiry.phone} onChange={handleChange} placeholder="Your phone number" className="w-full rounded-xl border p-3" required />
+              <textarea name="message" value={enquiry.message} onChange={handleChange} placeholder="Your message" className="h-32 w-full rounded-xl border p-3" required />
+              <button className="w-full rounded-xl bg-slate-900 px-6 py-3 font-bold text-white hover:bg-slate-800">
+                Send Enquiry
+              </button>
+            </form>
+          </section>
+
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-2xl font-black text-slate-900">
+              Schedule Inspection
             </h2>
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {nearbyProperties.map((item) => (
-                <div
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl bg-white shadow"
-                >
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="h-52 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-52 w-full items-center justify-center bg-slate-200 text-slate-500">
-                      No Image Available
-                    </div>
-                  )}
+            {inspectionMessage && (
+              <div className="mb-4 rounded-xl bg-green-100 p-3 text-green-700">
+                {inspectionMessage}
+              </div>
+            )}
 
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-slate-900">
-                      {item.title}
-                    </h3>
+            <form onSubmit={submitInspection} className="space-y-4">
+              <input type="text" name="name" value={inspection.name} onChange={handleInspectionChange} placeholder="Your name" className="w-full rounded-xl border p-3" required />
+              <input type="text" name="phone" value={inspection.phone} onChange={handleInspectionChange} placeholder="Your phone number" className="w-full rounded-xl border p-3" required />
+              <input type="datetime-local" name="inspection_date" value={inspection.inspection_date} onChange={handleInspectionChange} className="w-full rounded-xl border p-3" required />
+              <button className="w-full rounded-xl bg-purple-700 px-4 py-3 font-bold text-white hover:bg-purple-800">
+                Schedule Inspection
+              </button>
+            </form>
+          </section>
 
-                    <p className="mt-2 text-slate-600">
-                      {item.location || item.city || item.state || "No location"}
+          <MortgageCalculator propertyPrice={property.price} />
+        </div>
+
+        {seller && (
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-2xl font-black text-slate-900">
+              Leave Seller Review
+            </h2>
+
+            {reviewMessage && (
+              <div className="mb-4 rounded-xl bg-green-100 p-3 text-green-700">
+                {reviewMessage}
+              </div>
+            )}
+
+            <form onSubmit={submitReview} className="grid gap-4 md:grid-cols-[220px_1fr_auto]">
+              <select name="rating" value={review.rating} onChange={handleReviewChange} className="rounded-xl border p-3" required>
+                <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+                <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+                <option value="3">⭐⭐⭐ 3 Stars</option>
+                <option value="2">⭐⭐ 2 Stars</option>
+                <option value="1">⭐ 1 Star</option>
+              </select>
+
+              <textarea name="review" value={review.review} onChange={handleReviewChange} placeholder="Write your review..." className="h-20 rounded-xl border p-3" required />
+
+              <button className="rounded-xl bg-yellow-600 px-5 py-3 font-bold text-white hover:bg-yellow-700">
+                Submit
+              </button>
+            </form>
+
+            {reviews.length > 0 && (
+              <motion.div
+                variants={stagger}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="mt-6 grid gap-4 md:grid-cols-3"
+              >
+                {reviews.slice(0, 3).map((item) => (
+                  <motion.div key={item.id} variants={fadeUp} className="rounded-2xl bg-slate-50 p-4">
+                    <p className="font-bold text-yellow-600">
+                      {"⭐".repeat(Number(item.rating || 0))}
                     </p>
-
-                    <p className="mt-3 text-2xl font-bold text-purple-700">
-                      ₦{Number(item.price || 0).toLocaleString()}
+                    <p className="mt-2 text-sm text-slate-700">{item.review}</p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {new Date(item.created_at).toLocaleDateString()}
                     </p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </section>
+        )}
 
-                    <Link
-                      to={`/properties/${item.id}`}
-                      className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
-                    >
-                      View Property
-                    </Link>
-                  </div>
-                </div>
+        {recommendedProperties.length > 0 && (
+          <section>
+            <h2 className="mb-6 text-2xl font-black text-slate-900">
+              🤖 Recommended For You
+            </h2>
+            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
+              {recommendedProperties.map((item) => (
+                <PropertyMiniCard key={item.id} item={item} />
               ))}
-            </div>
+            </motion.div>
+          </section>
+        )}
+
+        {nearbyProperties.length > 0 && (
+          <section>
+            <h2 className="mb-6 text-2xl font-black text-slate-900">
+              🏘 Nearby Properties
+            </h2>
+            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
+              {nearbyProperties.map((item) => (
+                <PropertyMiniCard key={item.id} item={item} />
+              ))}
+            </motion.div>
           </section>
         )}
 
         {similarProperties.length > 0 && (
           <section>
-            {recommendedProperties.length > 0 && (
-  <section>
-    <h2 className="mb-6 text-2xl font-bold text-slate-900">
-      🤖 Recommended For You
-    </h2>
-
-    <div className="grid gap-6 md:grid-cols-3">
-      {recommendedProperties.map((item) => (
-        <div
-          key={item.id}
-          className="overflow-hidden rounded-3xl bg-white shadow"
-        >
-          {item.image_url ? (
-            <img
-              src={item.image_url}
-              alt={item.title}
-              className="h-52 w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-52 items-center justify-center bg-slate-200 text-slate-500">
-              No Image Available
-            </div>
-          )}
-
-          <div className="p-5">
-            <h3 className="text-lg font-bold text-slate-900">
-              {item.title}
-            </h3>
-
-            <p className="mt-2 text-slate-600">
-              {item.location || item.city || item.state}
-            </p>
-
-            <p className="mt-3 text-2xl font-bold text-purple-700">
-              ₦{Number(item.price || 0).toLocaleString()}
-            </p>
-
-            <Link
-              to={`/properties/${item.id}`}
-              className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
-            >
-              View Property
-            </Link>
-          </div>
-        </div>
-      ))}
-    </div>
-  </section>
-)}
-            <h2 className="mb-6 text-2xl font-bold text-slate-900">
+            <h2 className="mb-6 text-2xl font-black text-slate-900">
               ✨ Similar Properties You May Like
             </h2>
-
-            <div className="grid gap-6 md:grid-cols-3">
+            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
               {similarProperties.map((item) => (
-                <div
-                  key={item.id}
-                  className="overflow-hidden rounded-3xl bg-white shadow"
-                >
-                  {item.image_url ? (
-                    <img
-                      src={item.image_url}
-                      alt={item.title}
-                      className="h-52 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-52 w-full items-center justify-center bg-slate-200 text-slate-500">
-                      No Image Available
-                    </div>
-                  )}
-
-                  <div className="p-5">
-                    <h3 className="text-lg font-bold text-slate-900">
-                      {item.title}
-                    </h3>
-
-                    <p className="mt-2 text-slate-600">
-                      {item.location || item.city || "No location"}
-                    </p>
-
-                    <p className="mt-3 text-2xl font-bold text-purple-700">
-                      ₦{Number(item.price || 0).toLocaleString()}
-                    </p>
-
-                    <Link
-                      to={`/properties/${item.id}`}
-                      className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-semibold text-white hover:bg-purple-800"
-                    >
-                      View Property
-                    </Link>
-                  </div>
-                </div>
+                <PropertyMiniCard key={item.id} item={item} />
               ))}
-            </div>
+            </motion.div>
           </section>
         )}
       </div>
+
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxOpen(false)}
+          >
+            <motion.img
+              src={mainImage}
+              alt={property.title}
+              className="max-h-[90vh] max-w-full rounded-2xl object-contain"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+            />
+
+            <button
+              onClick={() => setLightboxOpen(false)}
+              className="absolute right-6 top-6 rounded-full bg-white px-5 py-3 font-black text-slate-900"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
