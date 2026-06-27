@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
 import MortgageCalculator from "../components/MortgageCalculator";
 import PropertyMap from "../components/PropertyMap";
+import AIInvestmentScore from "../components/AIInvestmentScore";
+import AIPropertyValuation from "../components/AIPropertyValuation";
 import { createNotification } from "../lib/createNotification";
 
 const fadeUp = {
@@ -605,6 +607,9 @@ export default function PropertyDetails() {
           </main>
 
           <aside className="space-y-6">
+            <AIInvestmentScore property={property} />
+            <AIPropertyValuation property={property} />
+
             {seller && (
               <motion.section
                 variants={fadeUp}

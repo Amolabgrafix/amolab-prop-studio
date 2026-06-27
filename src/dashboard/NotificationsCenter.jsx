@@ -21,6 +21,7 @@ function getNotificationIcon(type) {
   if (cleanType.includes("inspection")) return "📅";
   if (cleanType.includes("payment")) return "💳";
   if (cleanType.includes("review")) return "⭐";
+  if (cleanType.includes("ai_match")) return "🎯";
   if (cleanType.includes("property")) return "🏠";
 
   return "🔔";
@@ -246,11 +247,13 @@ export default function NotificationsCenter() {
               key={item.id}
               variants={fadeUp}
               whileHover={{ y: -4, scale: 1.005 }}
-              className={`relative overflow-hidden rounded-[2rem] border p-5 shadow-xl transition ${
-                item.is_read
-                  ? "border-white bg-white"
-                  : "border-purple-200 bg-purple-50"
-              }`}
+             className={`relative overflow-hidden rounded-[2rem] border p-5 shadow-xl transition ${
+            item.type === "ai_match"
+              ? "border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50"
+              : item.is_read
+              ? "border-white bg-white"
+              : "border-purple-200 bg-purple-50"
+          }`}
             >
               {!item.is_read && (
                 <div className="absolute left-0 top-0 h-full w-1.5 bg-purple-700" />
@@ -306,14 +309,14 @@ export default function NotificationsCenter() {
                 </div>
 
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  {item.link && (
-                    <Link
-                      to={item.link}
-                      className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
-                    >
-                      Open
-                    </Link>
-                  )}
+                  {(item.link || item.property_id) && (
+                  <Link
+                    to={item.property_id ? `/properties/${item.property_id}` : item.link}
+                    className="rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"
+                  >
+                    View Property
+                  </Link>
+                )}
 
                   {!item.is_read && (
                     <button

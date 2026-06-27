@@ -1,97 +1,91 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { supabase } from "../lib/supabase";
 
-function SidebarContent({ role, userLinks, sellerLinks, adminLinks, linkClass, setMobileOpen }) {
+function SidebarContent({
+  role,
+  userLinks,
+  sellerLinks,
+  adminLinks,
+  linkClass,
+  setMobileOpen,
+}) {
   return (
     <>
       <div className="p-6">
-        <div className="rounded-[2rem] bg-white/10 p-5 backdrop-blur">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[2rem] border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-xl"
+        >
           <h1 className="text-2xl font-black text-white">Amolab Prop</h1>
           <p className="mt-1 text-xs font-semibold text-purple-200">
             Premium Property Studio
           </p>
 
-          <div className="mt-4 rounded-2xl bg-purple-500/20 px-4 py-3 text-sm font-bold capitalize text-purple-100">
+          <div className="mt-4 rounded-2xl border border-purple-300/20 bg-purple-500/20 px-4 py-3 text-sm font-bold capitalize text-purple-100">
             Role: {role}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       <nav className="space-y-6 px-4 pb-8">
-        <div>
-          <p className="mb-3 px-4 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-            Main
-          </p>
+        <SidebarGroup
+          title="Main"
+          links={userLinks}
+          linkClass={linkClass}
+          setMobileOpen={setMobileOpen}
+        />
 
-          <div className="space-y-2">
-            {userLinks.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className={linkClass(item.to)}
-              >
-                <span>
-                  {item.icon} {item.label}
-                </span>
-
-                {item.badge > 0 && (
-                  <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-black text-white">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-3 px-4 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-            Seller Tools
-          </p>
-
-          <div className="space-y-2">
-            {sellerLinks.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className={linkClass(item.to)}
-              >
-                <span>
-                  {item.icon} {item.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <SidebarGroup
+          title="Seller Tools"
+          links={sellerLinks}
+          linkClass={linkClass}
+          setMobileOpen={setMobileOpen}
+        />
 
         {role === "admin" && (
-          <div>
-            <p className="mb-3 px-4 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-              Admin Tools
-            </p>
-
-            <div className="space-y-2">
-              {adminLinks.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={linkClass(item.to)}
-                >
-                  <span>
-                    {item.icon} {item.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          <SidebarGroup
+            title="Admin Tools"
+            links={adminLinks}
+            linkClass={linkClass}
+            setMobileOpen={setMobileOpen}
+          />
         )}
       </nav>
     </>
+  );
+}
+
+function SidebarGroup({ title, links, linkClass, setMobileOpen }) {
+  return (
+    <div>
+      <p className="mb-3 px-4 text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+        {title}
+      </p>
+
+      <div className="space-y-2">
+        {links.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            onClick={() => setMobileOpen(false)}
+            className={linkClass(item.to)}
+          >
+            <span>
+              {item.icon} {item.label}
+            </span>
+
+            {item.badge > 0 && (
+              <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-black text-white">
+                {item.badge}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -188,13 +182,40 @@ export default function DashboardLayout() {
     }`;
   }
 
-  const userLinks = [
-    { to: "/dashboard", label: "Dashboard Home", icon: "🏠" },
-    { to: "/dashboard/notifications", label: "Notifications", icon: "🔔", badge: unreadCount },
-    { to: "/dashboard/property-alerts", label: "Property Alerts", icon: "🚨" },
-    { to: "/dashboard/favorites", label: "My Favorites", icon: "❤️" },
-    { to: "/dashboard/recently-viewed", label: "Recently Viewed", icon: "👁" },
-  ];
+ const userLinks = [
+  { to: "/dashboard", label: "Dashboard Home", icon: "🏠" },
+
+  {
+    to: "/dashboard/notifications",
+    label: "Notifications",
+    icon: "🔔",
+    badge: unreadCount,
+  },
+
+  {
+    to: "/dashboard/saved-searches",
+    label: "Saved Searches",
+    icon: "🔍",
+  },
+
+  {
+    to: "/dashboard/property-alerts",
+    label: "Property Alerts",
+    icon: "🚨",
+  },
+
+  {
+    to: "/dashboard/favorites",
+    label: "My Favorites",
+    icon: "❤️",
+  },
+
+  {
+    to: "/dashboard/recently-viewed",
+    label: "Recently Viewed",
+    icon: "👁",
+  },
+];
 
   const sellerLinks = [
     { to: "/dashboard/seller", label: "Seller Dashboard", icon: "📊" },
@@ -203,6 +224,8 @@ export default function DashboardLayout() {
     { to: "/dashboard/seller/verification", label: "Verification", icon: "🛡" },
     { to: "/dashboard/seller/enquiries", label: "My Enquiries", icon: "💬" },
     { to: "/dashboard/seller/payments", label: "Payment History", icon: "💳" },
+    { to: "/dashboard/seller/subscription", label: "Subscription", icon: "💎" },
+    { to: "/dashboard/seller/analytics", label: "Analytics", icon: "📈" },
     { to: "/dashboard/seller/inspections", label: "Inspection Requests", icon: "📅" },
   ];
 
@@ -216,14 +239,15 @@ export default function DashboardLayout() {
     { to: "/dashboard/admin/enquiries", label: "Enquiries", icon: "📩" },
     { to: "/dashboard/admin/revenue", label: "Revenue", icon: "📈" },
     { to: "/dashboard/admin/inspections", label: "Inspections", icon: "📅" },
+    { to: "/dashboard/admin/analytics", label: "Analytics", icon: "📊" },
   ];
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="rounded-[2rem] bg-white p-8 text-center shadow-xl">
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 transition dark:bg-slate-950">
+        <div className="rounded-[2rem] border border-white/70 bg-white/80 p-8 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-purple-200 border-t-purple-700" />
-          <p className="mt-4 font-black text-purple-700">
+          <p className="mt-4 font-black text-purple-700 dark:text-purple-300">
             Loading dashboard...
           </p>
         </div>
@@ -232,9 +256,10 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="flex min-h-screen bg-slate-100 transition dark:bg-slate-950">
       <aside className="fixed left-0 top-0 hidden h-screen w-72 overflow-y-auto bg-slate-950 text-white md:block">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.25),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.28),transparent_35%)]" />
+        <div className="absolute bottom-0 right-0 h-60 w-60 rounded-full bg-purple-700/20 blur-3xl" />
         <div className="relative z-10">
           <SidebarContent
             role={role}
@@ -247,47 +272,55 @@ export default function DashboardLayout() {
         </div>
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
-
-          <motion.aside
-            initial={{ x: -320 }}
-            animate={{ x: 0 }}
-            exit={{ x: -320 }}
-            className="relative h-full w-80 overflow-y-auto bg-slate-950 text-white"
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 md:hidden"
           >
-            <SidebarContent
-              role={role}
-              userLinks={userLinks}
-              sellerLinks={sellerLinks}
-              adminLinks={adminLinks}
-              linkClass={linkClass}
-              setMobileOpen={setMobileOpen}
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
-          </motion.aside>
-        </div>
-      )}
+
+            <motion.aside
+              initial={{ x: -340 }}
+              animate={{ x: 0 }}
+              exit={{ x: -340 }}
+              transition={{ type: "spring", stiffness: 260, damping: 28 }}
+              className="relative h-full w-80 overflow-y-auto bg-slate-950 text-white shadow-2xl"
+            >
+              <SidebarContent
+                role={role}
+                userLinks={userLinks}
+                sellerLinks={sellerLinks}
+                adminLinks={adminLinks}
+                linkClass={linkClass}
+                setMobileOpen={setMobileOpen}
+              />
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 md:ml-72">
-        <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 px-4 py-4 backdrop-blur-xl md:px-6">
+        <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 px-4 py-4 shadow-sm backdrop-blur-xl transition dark:border-white/10 dark:bg-slate-950/80 md:px-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="rounded-xl bg-slate-900 px-4 py-2 font-black text-white md:hidden"
+                className="rounded-xl bg-slate-900 px-4 py-2 font-black text-white shadow-lg md:hidden"
               >
                 ☰
               </button>
 
-              <div>
-                <h1 className="text-xl font-black text-slate-900">
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-black text-slate-900 dark:text-white">
                   Dashboard
                 </h1>
-                <p className="text-sm text-slate-500">
+                <p className="truncate text-sm text-slate-500 dark:text-slate-400">
                   Manage properties, enquiries, payments and tools.
                 </p>
               </div>
@@ -295,16 +328,22 @@ export default function DashboardLayout() {
 
             <button
               onClick={handleLogout}
-              className="rounded-2xl bg-purple-700 px-5 py-3 font-black text-white shadow-lg shadow-purple-200 hover:bg-purple-800"
+              className="rounded-2xl bg-purple-700 px-5 py-3 font-black text-white shadow-lg shadow-purple-200 transition hover:-translate-y-0.5 hover:bg-purple-800 dark:shadow-purple-950/40"
             >
               Logout
             </button>
           </div>
         </header>
 
-        <div className="p-4 md:p-6">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 22, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.45 }}
+          className="p-4 text-slate-900 transition dark:text-white md:p-6"
+        >
           <Outlet />
-        </div>
+        </motion.div>
       </main>
     </div>
   );

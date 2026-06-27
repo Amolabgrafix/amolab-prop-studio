@@ -5,162 +5,59 @@ import { supabase } from "../lib/supabase";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55 } },
 };
 
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.09 } },
 };
 
-const sellerLinks = [
-  {
-    title: "Seller Dashboard",
-    desc: "View your seller overview.",
-    to: "/dashboard/seller",
-    icon: "📊",
-    theme: "dark",
-  },
-  {
-    title: "My Properties",
-    desc: "Manage your uploaded listings.",
-    to: "/dashboard/seller/properties",
-    icon: "🏠",
-  },
-  {
-    title: "Add Property",
-    desc: "Upload a new property.",
-    to: "/dashboard/seller/add-property",
-    icon: "➕",
-  },
-  {
-    title: "Verification",
-    desc: "Submit or update your NIN.",
-    to: "/dashboard/seller/verification",
-    icon: "✅",
-  },
-  {
-    title: "My Enquiries",
-    desc: "View buyer and tenant messages.",
-    to: "/dashboard/seller/enquiries",
-    icon: "💬",
-  },
-  {
-    title: "Payment History",
-    desc: "Review boost, featured and subscription payments.",
-    to: "/dashboard/seller/payments",
-    icon: "💳",
-  },
-  {
-    title: "Recently Viewed",
-    desc: "View properties you recently visited.",
-    to: "/dashboard/recently-viewed",
-    icon: "👁",
-  },
-  {
-    title: "Browse Properties",
-    desc: "See approved public listings.",
-    to: "/properties",
-    icon: "🔎",
-    theme: "black",
-  },
-];
-
-const adminLinks = [
-  {
-    title: "Admin Dashboard",
-    desc: "View admin overview.",
-    to: "/dashboard/admin",
-    icon: "🛡",
-    theme: "admin",
-  },
-  {
-    title: "Manage Users",
-    desc: "Approve users and access.",
-    to: "/dashboard/admin/users",
-    icon: "👥",
-  },
-  {
-    title: "Manage Properties",
-    desc: "Approve or reject listings.",
-    to: "/dashboard/admin/properties",
-    icon: "🏘",
-  },
-  {
-    title: "Verifications",
-    desc: "Review seller verification requests.",
-    to: "/dashboard/admin/verifications",
-    icon: "✅",
-  },
-  {
-    title: "Revenue",
-    desc: "Track subscriptions, boosts and featured payments.",
-    to: "/dashboard/admin/revenue",
-    icon: "📈",
-  },
-  {
-    title: "Payments",
-    desc: "Monitor platform payments.",
-    to: "/dashboard/admin/payments",
-    icon: "💰",
-  },
-];
-
-function formatPrice(price) {
-  return `₦${Number(price || 0).toLocaleString()}`;
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString();
 }
 
-function getLocation(property) {
-  return property?.location || property?.city || property?.state || "No location";
-}
-
-function DashboardLinkCard({ item }) {
-  const isDark = item.theme === "dark";
-  const isBlack = item.theme === "black";
-  const isAdmin = item.theme === "admin";
-
-  const darkClass = isDark
-    ? "bg-gradient-to-br from-purple-700 to-indigo-800 text-white"
-    : isBlack
-    ? "bg-gradient-to-br from-slate-950 to-black text-white"
-    : isAdmin
-    ? "bg-gradient-to-br from-red-600 to-rose-700 text-white"
-    : "bg-white text-slate-900";
-
+function PortalCard({ item }) {
   return (
     <motion.div variants={fadeUp} whileHover={{ y: -7, scale: 1.01 }}>
       <Link
         to={item.to}
-        className={`group relative block overflow-hidden rounded-[2rem] p-6 shadow-xl ${darkClass}`}
+        className={`group relative block overflow-hidden rounded-[2rem] border border-white/70 p-6 shadow-xl backdrop-blur-xl transition dark:border-white/10 ${
+          item.featured
+            ? "bg-gradient-to-br from-purple-700 to-slate-950 text-white"
+            : "bg-white/85 text-slate-900 dark:bg-slate-900/80 dark:text-white"
+        }`}
       >
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute -right-10 -top-10 h-28 w-28 rounded-full ${
-            item.theme ? "bg-white/10" : "bg-purple-100"
-          }`}
-        />
+        <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-purple-400/20 blur-2xl" />
 
         <div className="relative z-10">
           <div
             className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl text-2xl shadow ${
-              item.theme ? "bg-white/15" : "bg-purple-50"
+              item.featured
+                ? "bg-white/15"
+                : "bg-purple-100 dark:bg-purple-500/20"
             }`}
           >
             {item.icon}
           </div>
 
-          <h2 className={`text-xl font-black ${item.theme ? "text-white" : "text-slate-900"}`}>
-            {item.title}
-          </h2>
+          <h2 className="text-xl font-black">{item.title}</h2>
 
-          <p className={`mt-2 text-sm ${item.theme ? "text-white/75" : "text-slate-600"}`}>
+          <p
+            className={`mt-2 text-sm ${
+              item.featured
+                ? "text-white/75"
+                : "text-slate-600 dark:text-slate-400"
+            }`}
+          >
             {item.desc}
           </p>
 
           <div
             className={`mt-5 inline-flex items-center gap-2 text-sm font-black transition group-hover:translate-x-1 ${
-              item.theme ? "text-white" : "text-purple-700"
+              item.featured
+                ? "text-white"
+                : "text-purple-700 dark:text-purple-300"
             }`}
           >
             Open <span>→</span>
@@ -171,67 +68,47 @@ function DashboardLinkCard({ item }) {
   );
 }
 
-function RecentPropertyCard({ property }) {
+function StatCard({ title, value, icon }) {
   return (
     <motion.div
       variants={fadeUp}
-      whileHover={{ y: -6, scale: 1.01 }}
-      className="group overflow-hidden rounded-[2rem] bg-white shadow-xl"
+      whileHover={{ y: -5 }}
+      className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-xl transition dark:border-white/10 dark:bg-slate-900/80"
     >
-      <div className="relative h-48 overflow-hidden bg-slate-200">
-        {property.image_url ? (
-          <img
-            src={property.image_url}
-            alt={property.title}
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-slate-500">
-            No Image
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
-        <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black capitalize text-purple-700">
-          {property.status || "pending"}
-        </span>
-
-        <span className="absolute bottom-4 left-4 rounded-full bg-black/50 px-3 py-1 text-xs font-bold text-white">
-          👁 {property.views || 0} views
-        </span>
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-2xl dark:bg-purple-500/20">
+        {icon}
       </div>
 
-      <div className="p-5">
-        <h3 className="line-clamp-1 text-lg font-black text-slate-900">
-          {property.title}
-        </h3>
+      <p className="mt-5 text-3xl font-black text-slate-950 dark:text-white">
+        {formatNumber(value)}
+      </p>
 
-        <p className="mt-2 line-clamp-1 text-sm text-slate-600">
-          📍 {getLocation(property)}
-        </p>
-
-        <p className="mt-3 text-xl font-black text-purple-700">
-          {formatPrice(property.price)}
-        </p>
-
-        <Link
-          to={`/properties/${property.id}`}
-          className="mt-4 block rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-bold text-white hover:bg-purple-700"
-        >
-          View Property
-        </Link>
-      </div>
+      <p className="mt-1 text-sm font-bold text-slate-500 dark:text-slate-400">
+        {title}
+      </p>
     </motion.div>
+  );
+}
+
+function NotificationItem({ item }) {
+  return (
+    <div className="rounded-2xl bg-slate-50 p-4 dark:bg-white/5">
+      <p className="font-black text-slate-900 dark:text-white">
+        {item.title || "Notification"}
+      </p>
+      <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">
+        {item.message || "No message"}
+      </p>
+    </div>
   );
 }
 
 function SkeletonCard() {
   return (
-    <div className="rounded-[2rem] bg-white p-6 shadow-xl">
-      <div className="h-12 w-12 animate-pulse rounded-2xl bg-slate-200" />
-      <div className="mt-5 h-6 w-32 animate-pulse rounded bg-slate-200" />
-      <div className="mt-3 h-4 w-48 animate-pulse rounded bg-slate-200" />
+    <div className="animate-pulse rounded-[2rem] border border-white/70 bg-white/80 p-6 shadow-xl dark:border-white/10 dark:bg-slate-900/80">
+      <div className="h-12 w-12 rounded-2xl bg-slate-200 dark:bg-white/10" />
+      <div className="mt-5 h-6 w-32 rounded bg-slate-200 dark:bg-white/10" />
+      <div className="mt-3 h-4 w-48 rounded bg-slate-200 dark:bg-white/10" />
     </div>
   );
 }
@@ -239,21 +116,22 @@ function SkeletonCard() {
 export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState("seller");
+
   const [stats, setStats] = useState({
-    properties: 0,
-    approved: 0,
-    boosted: 0,
-    featured: 0,
-    views: 0,
+    myProperties: 0,
+    favorites: 0,
+    notifications: 0,
+    recentlyViewed: 0,
     enquiries: 0,
+    payments: 0,
     inspections: 0,
-    unread: 0,
+    platformProperties: 0,
   });
-  const [recentProperties, setRecentProperties] = useState([]);
+
   const [recentNotifications, setRecentNotifications] = useState([]);
 
   useEffect(() => {
-    async function loadDashboardHome() {
+    async function loadPortal() {
       setLoading(true);
 
       const {
@@ -274,78 +152,186 @@ export default function DashboardHome() {
       const userRole = profile?.role || "seller";
       setRole(userRole);
 
-      const { data: propertiesData } = await supabase
+      const [
+        { count: myPropertiesCount },
+        { count: favoritesCount },
+        { count: notificationsCount },
+        { count: recentlyViewedCount },
+        { count: paymentsCount },
+        { count: inspectionsCount },
+        { count: platformPropertiesCount },
+      ] = await Promise.all([
+        supabase
+          .from("properties")
+          .select("*", { count: "exact", head: true })
+          .eq("owner_id", user.id),
+
+        supabase
+          .from("favorites")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+
+        supabase
+          .from("notifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_read", false),
+
+        supabase
+          .from("recently_viewed")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+
+        supabase
+          .from("payments")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+
+        supabase
+          .from("property_inspections")
+          .select("*", { count: "exact", head: true })
+          .eq("buyer_id", user.id),
+
+        supabase
+          .from("properties")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "approved"),
+      ]);
+
+      const { data: sellerProperties } = await supabase
         .from("properties")
-        .select("*")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false });
+        .select("id")
+        .eq("owner_id", user.id);
 
-      const sellerProperties = propertiesData || [];
+      const sellerPropertyIds = (sellerProperties || []).map((item) => item.id);
 
-      const [{ count: enquiriesCount }, { count: inspectionsCount }, { count: unreadCount }] =
-        await Promise.all([
-          supabase
-            .from("enquiries")
-            .select("*", { count: "exact", head: true })
-            .in(
-              "property_id",
-              sellerProperties.map((item) => item.id).length
-                ? sellerProperties.map((item) => item.id)
-                : ["00000000-0000-0000-0000-000000000000"]
-            ),
+      let enquiriesCount = 0;
 
-          supabase
-            .from("property_inspections")
-            .select("*", { count: "exact", head: true })
-            .in(
-              "property_id",
-              sellerProperties.map((item) => item.id).length
-                ? sellerProperties.map((item) => item.id)
-                : ["00000000-0000-0000-0000-000000000000"]
-            ),
+      if (sellerPropertyIds.length > 0) {
+        const { count } = await supabase
+          .from("enquiries")
+          .select("*", { count: "exact", head: true })
+          .in("property_id", sellerPropertyIds);
 
-          supabase
-            .from("notifications")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .eq("is_read", false),
-        ]);
+        enquiriesCount = count || 0;
+      }
 
       const { data: notificationsData } = await supabase
         .from("notifications")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(3);
+        .limit(4);
 
       setStats({
-        properties: sellerProperties.length,
-        approved: sellerProperties.filter((item) => item.status === "approved").length,
-        boosted: sellerProperties.filter((item) => item.is_boosted).length,
-        featured: sellerProperties.filter((item) => item.is_featured).length,
-        views: sellerProperties.reduce((sum, item) => sum + Number(item.views || 0), 0),
-        enquiries: enquiriesCount || 0,
+        myProperties: myPropertiesCount || 0,
+        favorites: favoritesCount || 0,
+        notifications: notificationsCount || 0,
+        recentlyViewed: recentlyViewedCount || 0,
+        enquiries: enquiriesCount,
+        payments: paymentsCount || 0,
         inspections: inspectionsCount || 0,
-        unread: unreadCount || 0,
+        platformProperties: platformPropertiesCount || 0,
       });
 
-      setRecentProperties(sellerProperties.slice(0, 3));
       setRecentNotifications(notificationsData || []);
       setLoading(false);
     }
 
-    loadDashboardHome();
+    loadPortal();
   }, []);
 
-  const approvalRate = useMemo(() => {
-    if (!stats.properties) return 0;
-    return Math.round((stats.approved / stats.properties) * 100);
-  }, [stats]);
+  const mainLinks = useMemo(() => {
+    const links = [
+      {
+        title: "Browse Properties",
+        desc: "Explore verified homes, rentals and premium listings.",
+        to: "/properties",
+        icon: "🔎",
+        featured: true,
+      },
+      {
+        title: "Favorites",
+        desc: "View all properties you saved for later.",
+        to: "/dashboard/favorites",
+        icon: "❤️",
+      },
+      {
+        title: "Recently Viewed",
+        desc: "Continue from properties you checked before.",
+        to: "/dashboard/recently-viewed",
+        icon: "👁",
+      },
+      {
+        title: "Notifications",
+        desc: "Read updates, alerts and system messages.",
+        to: "/dashboard/notifications",
+        icon: "🔔",
+      },
+      {
+        title: "Property Alerts",
+        desc: "Track your saved property alert preferences.",
+        to: "/dashboard/property-alerts",
+        icon: "🚨",
+      },
+      {
+        title: "Compare Properties",
+        desc: "Compare homes side by side before deciding.",
+        to: "/compare",
+        icon: "⚖️",
+      },
+    ];
 
-  const featureRate = useMemo(() => {
-    if (!stats.properties) return 0;
-    return Math.round((stats.featured / stats.properties) * 100);
-  }, [stats]);
+    if (role === "seller" || role === "admin") {
+      links.push(
+        {
+          title: "Seller Workspace",
+          desc: "Open your seller dashboard and property tools.",
+          to: "/dashboard/seller",
+          icon: "📊",
+          featured: true,
+        },
+        {
+          title: "Add Property",
+          desc: "Upload a new property listing to the platform.",
+          to: "/dashboard/seller/add-property",
+          icon: "➕",
+        },
+        {
+          title: "Seller Analytics",
+          desc: "Track views, enquiries and listing performance.",
+          to: "/dashboard/seller/analytics",
+          icon: "📈",
+        }
+      );
+    }
+
+    if (role === "admin") {
+      links.push(
+        {
+          title: "Admin Center",
+          desc: "Manage platform users, properties and revenue.",
+          to: "/dashboard/admin",
+          icon: "🛡",
+          featured: true,
+        },
+        {
+          title: "Admin Analytics",
+          desc: "Monitor platform growth and marketplace performance.",
+          to: "/dashboard/admin/analytics",
+          icon: "📊",
+        },
+        {
+          title: "KYC Verifications",
+          desc: "Review seller identity documents and notes.",
+          to: "/dashboard/admin/verifications",
+          icon: "✅",
+        }
+      );
+    }
+
+    return links;
+  }, [role]);
 
   return (
     <div className="relative">
@@ -361,15 +347,17 @@ export default function DashboardHome() {
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.35em] text-purple-200">
-              Control Center
+              Main Portal
             </p>
 
             <h1 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">
-              Dashboard
+              Welcome to your dashboard
             </h1>
 
             <p className="mt-3 max-w-2xl text-purple-100">
-              Manage your properties, verification, enquiries, recently viewed homes and admin tools from one premium workspace.
+              This is your central portal for browsing properties, managing
+              favorites, notifications, seller tools, inspections and admin
+              access.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -378,24 +366,24 @@ export default function DashboardHome() {
               </span>
 
               <span className="rounded-2xl bg-white/10 px-5 py-3 font-bold backdrop-blur">
-                🔔 {loading ? "..." : stats.unread} Unread
+                🔔 {loading ? "..." : stats.notifications} Unread
               </span>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
-              to="/dashboard/seller/add-property"
+              to="/properties"
               className="rounded-2xl bg-white px-6 py-4 font-black text-purple-700 shadow-xl hover:bg-purple-50"
             >
-              Add Property
+              Browse Properties
             </Link>
 
             <Link
-              to="/properties"
+              to="/dashboard/seller/add-property"
               className="rounded-2xl bg-purple-600 px-6 py-4 font-black text-white shadow-xl hover:bg-purple-700"
             >
-              Browse
+              List Property
             </Link>
           </div>
         </div>
@@ -415,201 +403,109 @@ export default function DashboardHome() {
           animate="show"
           className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4"
         >
-          {[
-            { label: "Properties", value: stats.properties, icon: "🏠" },
-            { label: "Total Views", value: stats.views, icon: "👁" },
-            { label: "Enquiries", value: stats.enquiries, icon: "💬" },
-            { label: "Inspections", value: stats.inspections, icon: "📅" },
-            { label: "Approved", value: stats.approved, icon: "✅" },
-            { label: "Boosted", value: stats.boosted, icon: "🚀" },
-            { label: "Featured", value: stats.featured, icon: "⭐" },
-            { label: "Unread", value: stats.unread, icon: "🔔" },
-          ].map((item) => (
-            <motion.div
-              key={item.label}
-              variants={fadeUp}
-              whileHover={{ y: -5 }}
-              className="rounded-[2rem] bg-white p-6 shadow-xl"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-100 text-2xl">
-                {item.icon}
-              </div>
-
-              <p className="mt-5 text-3xl font-black text-slate-950">
-                {item.value}
-              </p>
-
-              <p className="mt-1 text-sm font-bold text-slate-500">
-                {item.label}
-              </p>
-            </motion.div>
-          ))}
+          <StatCard title="Approved Properties" value={stats.platformProperties} icon="🏘" />
+          <StatCard title="My Properties" value={stats.myProperties} icon="🏠" />
+          <StatCard title="Favorites" value={stats.favorites} icon="❤️" />
+          <StatCard title="Recently Viewed" value={stats.recentlyViewed} icon="👁" />
+          <StatCard title="Unread Alerts" value={stats.notifications} icon="🔔" />
+          <StatCard title="Seller Enquiries" value={stats.enquiries} icon="💬" />
+          <StatCard title="Payments" value={stats.payments} icon="💳" />
+          <StatCard title="Inspections" value={stats.inspections} icon="📅" />
         </motion.section>
       )}
 
       <div className="mt-10 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
         <section>
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black text-slate-900">
-                Quick Actions
-              </h2>
-              <p className="mt-1 text-slate-600">
-                Everything you need to manage your real estate workspace.
-              </p>
-            </div>
+          <div className="mb-5">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+              Portal Shortcuts
+            </h2>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">
+              Choose where you want to go next.
+            </p>
           </div>
 
           <motion.div
             variants={stagger}
             initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
+            animate="show"
             className="grid gap-6 md:grid-cols-2"
           >
-            {sellerLinks.map((item) => (
-              <DashboardLinkCard key={item.to} item={item} />
+            {mainLinks.map((item) => (
+              <PortalCard key={`${item.title}-${item.to}`} item={item} />
             ))}
           </motion.div>
         </section>
 
         <aside className="space-y-8">
-          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
-            <h2 className="text-2xl font-black text-slate-900">
-              Performance
+          <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+              Portal Guide
             </h2>
 
-            <div className="mt-6 space-y-6">
-              <div>
-                <div className="mb-2 flex justify-between text-sm font-bold text-slate-600">
-                  <span>Approval Rate</span>
-                  <span>{approvalRate}%</span>
-                </div>
-                <div className="h-3 rounded-full bg-slate-100">
-                  <div
-                    className="h-3 rounded-full bg-purple-700"
-                    style={{ width: `${approvalRate}%` }}
-                  />
-                </div>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-2xl bg-purple-50 p-4 dark:bg-purple-500/10">
+                <p className="font-black text-purple-700 dark:text-purple-300">
+                  Buyer Tools
+                </p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Browse, compare, save favorites and track recently viewed
+                  properties.
+                </p>
               </div>
 
-              <div>
-                <div className="mb-2 flex justify-between text-sm font-bold text-slate-600">
-                  <span>Featured Rate</span>
-                  <span>{featureRate}%</span>
-                </div>
-                <div className="h-3 rounded-full bg-slate-100">
-                  <div
-                    className="h-3 rounded-full bg-yellow-500"
-                    style={{ width: `${featureRate}%` }}
-                  />
-                </div>
+              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-white/5">
+                <p className="font-black text-slate-900 dark:text-white">
+                  Seller Tools
+                </p>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Add listings, manage enquiries, subscriptions, verification
+                  and analytics.
+                </p>
               </div>
+
+              {role === "admin" && (
+                <div className="rounded-2xl bg-rose-50 p-4 dark:bg-rose-500/10">
+                  <p className="font-black text-rose-700 dark:text-rose-300">
+                    Admin Tools
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    Manage users, properties, payments, revenue, analytics and
+                    verifications.
+                  </p>
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
+          <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/80">
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-2xl font-black text-slate-900">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                 Recent Notifications
               </h2>
 
               <Link
                 to="/dashboard/notifications"
-                className="text-sm font-black text-purple-700"
+                className="text-sm font-black text-purple-700 dark:text-purple-300"
               >
                 View all
               </Link>
             </div>
 
             {recentNotifications.length === 0 ? (
-              <p className="text-slate-500">No notifications yet.</p>
+              <p className="text-slate-500 dark:text-slate-400">
+                No notifications yet.
+              </p>
             ) : (
               <div className="space-y-3">
                 {recentNotifications.map((item) => (
-                  <div key={item.id} className="rounded-2xl bg-slate-50 p-4">
-                    <p className="font-black text-slate-900">
-                      {item.title || "Notification"}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                      {item.message}
-                    </p>
-                  </div>
+                  <NotificationItem key={item.id} item={item} />
                 ))}
               </div>
             )}
           </section>
         </aside>
       </div>
-
-      <section className="mt-10">
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-900">
-              Recent Properties
-            </h2>
-            <p className="mt-1 text-slate-600">
-              Your latest uploaded property listings.
-            </p>
-          </div>
-
-          <Link
-            to="/dashboard/seller/properties"
-            className="rounded-2xl bg-slate-900 px-5 py-3 font-bold text-white hover:bg-purple-700"
-          >
-            View All
-          </Link>
-        </div>
-
-        {recentProperties.length === 0 ? (
-          <div className="rounded-[2rem] bg-white p-10 text-center shadow-xl">
-            <p className="text-slate-600">No recent properties yet.</p>
-            <Link
-              to="/dashboard/seller/add-property"
-              className="mt-5 inline-block rounded-2xl bg-purple-700 px-6 py-3 font-bold text-white"
-            >
-              Add Property
-            </Link>
-          </div>
-        ) : (
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid gap-6 md:grid-cols-3"
-          >
-            {recentProperties.map((property) => (
-              <RecentPropertyCard key={property.id} property={property} />
-            ))}
-          </motion.div>
-        )}
-      </section>
-
-      {role === "admin" && (
-        <section className="mt-12">
-          <div className="mb-5">
-            <h2 className="text-2xl font-black text-slate-900">
-              Admin Tools
-            </h2>
-            <p className="mt-1 text-slate-600">
-              Quick access to admin management panels.
-            </p>
-          </div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="grid gap-6 md:grid-cols-3"
-          >
-            {adminLinks.map((item) => (
-              <DashboardLinkCard key={item.to} item={item} />
-            ))}
-          </motion.div>
-        </section>
-      )}
     </div>
   );
 }

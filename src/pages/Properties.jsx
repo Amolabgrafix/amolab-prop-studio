@@ -5,6 +5,9 @@ import AnimatedCard from "../components/AnimatedCard";
 import { PropertyGridLoader } from "../components/LoadingGrid";
 import { supabase } from "../lib/supabase";
 
+import SaveSearchButton from "../components/SaveSearchButton";
+import CompareButton from "../components/CompareButton";
+
 function PropertyImage({ src, title }) {
   const [failed, setFailed] = useState(false);
 
@@ -122,30 +125,6 @@ export default function Properties() {
     }
   }
 
-  function addToCompare(e, propertyId) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const current = JSON.parse(
-      localStorage.getItem("compare_properties") || "[]"
-    );
-
-    if (current.includes(propertyId)) {
-      toast("Already in comparison");
-      return;
-    }
-
-    if (current.length >= 3) {
-      toast.error("Maximum 3 properties");
-      return;
-    }
-
-    const updated = [...current, propertyId];
-    localStorage.setItem("compare_properties", JSON.stringify(updated));
-
-    toast.success("Property added to comparison");
-  }
-
   const filteredProperties = properties.filter((property) => {
     const searchText = search.toLowerCase();
     const locationText = location.toLowerCase();
@@ -213,12 +192,21 @@ export default function Properties() {
             </p>
           </div>
 
+          <div className="flex flex-wrap gap-3">
+          <SaveSearchButton
+            search={search}
+            location={location}
+            propertyType={propertyType}
+            maxPrice={maxPrice}
+          />
+
           <Link
             to="/compare"
             className="rounded-xl bg-purple-700 px-5 py-3 font-semibold text-white transition hover:-translate-y-1 hover:bg-purple-800 hover:shadow-lg"
           >
             View Compare
           </Link>
+        </div>
         </div>
 
         <div className="mb-8 rounded-2xl bg-white p-5 shadow">
@@ -357,14 +345,10 @@ export default function Properties() {
                         <div className="flex-1 rounded-lg bg-blue-700 py-2 text-center font-semibold text-white transition group-hover:bg-purple-700">
                           View Details
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => addToCompare(e, property.id)}
-                          className="flex-1 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white transition hover:bg-slate-800"
-                        >
-                          Compare
-                        </button>
+                        <CompareButton
+                          property={property}
+                          className="flex-1 rounded-lg"
+                        />
                       </div>
                     </div>
                   </Link>

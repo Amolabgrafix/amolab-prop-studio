@@ -36,7 +36,7 @@ export default function Login() {
     }
 
     toast.success("Welcome back!");
-    navigate("/dashboard");
+    navigate("/", { replace: true });
   }
 
   return (
@@ -111,21 +111,21 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="bg-white p-6 sm:p-10 lg:p-14">
+          <div className="bg-white p-6 transition dark:bg-slate-900 sm:p-10 lg:p-14">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55 }}
             >
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-purple-700">
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-purple-700 dark:text-purple-300">
                 Welcome Back
               </p>
 
-              <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">
+              <h2 className="mt-3 text-3xl font-black text-slate-900 dark:text-white sm:text-4xl">
                 Login to your account
               </h2>
 
-              <p className="mt-3 text-slate-500">
+              <p className="mt-3 text-slate-500 dark:text-slate-400">
                 Continue managing your properties, inspections, favorites, and
                 enquiries.
               </p>
@@ -137,7 +137,7 @@ export default function Login() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">
                   Email Address
                 </label>
                 <input
@@ -147,7 +147,7 @@ export default function Login() {
                   onChange={handleChange}
                   required
                   placeholder="you@example.com"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-900 outline-none transition focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-100 dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 />
               </motion.div>
 
@@ -156,7 +156,7 @@ export default function Login() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.25 }}
               >
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-slate-700 dark:text-slate-200">
                   Password
                 </label>
                 <input
@@ -166,7 +166,7 @@ export default function Login() {
                   onChange={handleChange}
                   required
                   placeholder="Enter password"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 outline-none transition focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-100"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-slate-900 outline-none transition focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-100 dark:border-white/10 dark:bg-white/10 dark:text-white dark:placeholder:text-slate-500 dark:focus:bg-white/10"
                 />
               </motion.div>
 
@@ -174,17 +174,17 @@ export default function Login() {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={loading}
-                className="w-full rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-700 px-6 py-4 font-black text-white shadow-lg shadow-purple-200 transition disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-700 px-6 py-4 font-black text-white shadow-lg shadow-purple-200 transition disabled:cursor-not-allowed disabled:opacity-60 dark:shadow-purple-950/40"
               >
                 {loading ? "Logging in..." : "Login"}
               </motion.button>
             </form>
 
-            <p className="mt-8 text-center text-sm text-slate-500">
+            <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
               Don&apos;t have an account?{" "}
               <Link
                 to="/register"
-                className="font-black text-purple-700 hover:underline"
+                className="font-black text-purple-700 hover:underline dark:text-purple-300"
               >
                 Create account
               </Link>

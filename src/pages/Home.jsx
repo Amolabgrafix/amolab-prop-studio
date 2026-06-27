@@ -5,6 +5,25 @@ import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { supabase } from "../lib/supabase";
 
+
+import AIRecommendations from "../components/AIRecommendations";
+
+import ContinueBrowsing from "../components/ContinueBrowsing";
+
+import TrendingNearYou from "../components/TrendingNearYou";
+
+import NewestListings from "../components/NewestListings";
+
+import LuxuryCollection from "../components/LuxuryCollection";
+
+import AgentSpotlight from "../components/AgentSpotlight";
+
+import PopularLocations from "../components/PopularLocations";
+
+import AffordablePicks from "../components/AffordablePicks";
+
+import PropertyTypeExplorer from "../components/PropertyTypeExplorer";
+
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
@@ -493,6 +512,24 @@ export default function Home() {
             ))}
           </motion.div>
         </section>
+
+        <AIRecommendations />
+
+        <ContinueBrowsing />
+        
+        <TrendingNearYou />
+
+        <NewestListings />
+
+        <LuxuryCollection />
+
+        <AgentSpotlight />
+
+        <PopularLocations />
+
+        <AffordablePicks />
+
+        <PropertyTypeExplorer />
 
         <PropertySection
           title="Boosted Properties"
