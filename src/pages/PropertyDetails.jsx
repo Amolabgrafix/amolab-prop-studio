@@ -3,10 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
+
 import MortgageCalculator from "../components/MortgageCalculator";
 import PropertyMap from "../components/PropertyMap";
 import AIInvestmentScore from "../components/AIInvestmentScore";
 import AIPropertyValuation from "../components/AIPropertyValuation";
+import AIPropertyAssistant from "../components/AIPropertyAssistant";
+import PropertyOfferBox from "../components/PropertyOfferBox";
+import WatchPropertyButton from "../components/WatchPropertyButton";
 import { createNotification } from "../lib/createNotification";
 
 const fadeUp = {
@@ -24,24 +28,33 @@ function PropertyMiniCard({ item }) {
     <motion.div
       variants={fadeUp}
       whileHover={{ y: -8, scale: 1.01 }}
-      className="overflow-hidden rounded-3xl bg-white shadow-xl"
+      className="overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-slate-900"
     >
       {item.image_url ? (
-        <img src={item.image_url} alt={item.title} className="h-52 w-full object-cover" />
+        <img
+          src={item.image_url}
+          alt={item.title}
+          className="h-52 w-full object-cover"
+        />
       ) : (
-        <div className="flex h-52 items-center justify-center bg-slate-200 text-slate-500">
+        <div className="flex h-52 items-center justify-center bg-slate-200 text-slate-500 dark:bg-slate-800">
           No Image Available
         </div>
       )}
 
       <div className="p-5">
-        <h3 className="line-clamp-1 text-lg font-black text-slate-900">{item.title}</h3>
-        <p className="mt-2 line-clamp-1 text-slate-600">
+        <h3 className="line-clamp-1 text-lg font-black text-slate-900 dark:text-white">
+          {item.title}
+        </h3>
+
+        <p className="mt-2 line-clamp-1 text-slate-600 dark:text-slate-300">
           📍 {item.location || item.city || item.state || "No location"}
         </p>
-        <p className="mt-3 text-2xl font-black text-purple-700">
+
+        <p className="mt-3 text-2xl font-black text-purple-700 dark:text-purple-300">
           ₦{Number(item.price || 0).toLocaleString()}
         </p>
+
         <Link
           to={`/properties/${item.id}`}
           className="mt-4 block rounded-xl bg-purple-700 px-4 py-3 text-center font-bold text-white hover:bg-purple-800"
@@ -110,7 +123,11 @@ export default function PropertyDetails() {
       }
 
       const newViews = Number(propertyData.views || 0) + 1;
-      await supabase.from("properties").update({ views: newViews }).eq("id", id);
+
+      await supabase
+        .from("properties")
+        .update({ views: newViews })
+        .eq("id", id);
 
       const { data: userData } = await supabase.auth.getUser();
       const user = userData?.user;
@@ -179,7 +196,10 @@ export default function PropertyDetails() {
     setReviews(data || []);
 
     if (data?.length) {
-      const total = data.reduce((sum, item) => sum + Number(item.rating || 0), 0);
+      const total = data.reduce(
+        (sum, item) => sum + Number(item.rating || 0),
+        0
+      );
       setAverageRating((total / data.length).toFixed(1));
     } else {
       setAverageRating(0);
@@ -406,7 +426,9 @@ export default function PropertyDetails() {
   }
 
   function getLocation() {
-    return property?.location || property?.city || property?.state || "No location";
+    return (
+      property?.location || property?.city || property?.state || "No location"
+    );
   }
 
   function getPropertyType() {
@@ -419,11 +441,11 @@ export default function PropertyDetails() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-950">
         <div className="space-y-4">
-          <div className="h-5 w-40 animate-pulse rounded bg-slate-300" />
-          <div className="h-5 w-64 animate-pulse rounded bg-slate-300" />
-          <div className="h-5 w-52 animate-pulse rounded bg-slate-300" />
+          <div className="h-5 w-40 animate-pulse rounded bg-slate-300 dark:bg-slate-800" />
+          <div className="h-5 w-64 animate-pulse rounded bg-slate-300 dark:bg-slate-800" />
+          <div className="h-5 w-52 animate-pulse rounded bg-slate-300 dark:bg-slate-800" />
         </div>
       </div>
     );
@@ -431,9 +453,12 @@ export default function PropertyDetails() {
 
   if (!property) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="rounded-3xl bg-white p-10 shadow-xl">
-          <h1 className="text-3xl font-bold text-red-600">Property not found</h1>
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-950">
+        <div className="rounded-3xl bg-white p-10 shadow-xl dark:bg-slate-900">
+          <h1 className="text-3xl font-bold text-red-600">
+            Property not found
+          </h1>
+
           <Link
             to="/properties"
             className="mt-6 inline-block rounded-2xl bg-purple-700 px-6 py-4 font-bold text-white"
@@ -446,13 +471,13 @@ export default function PropertyDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 px-4 py-8">
+    <div className="min-h-screen bg-slate-100 px-4 py-8 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl space-y-8">
         <motion.div
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          className="overflow-hidden rounded-[2rem] bg-white shadow-2xl"
+          className="overflow-hidden rounded-[2rem] bg-white shadow-2xl dark:bg-slate-900"
         >
           <div className="relative">
             {mainImage ? (
@@ -463,7 +488,7 @@ export default function PropertyDetails() {
                 className="h-[430px] w-full cursor-pointer object-cover md:h-[520px]"
               />
             ) : (
-              <div className="flex h-[430px] w-full items-center justify-center bg-slate-200 text-slate-500 md:h-[520px]">
+              <div className="flex h-[430px] w-full items-center justify-center bg-slate-200 text-slate-500 dark:bg-slate-800 md:h-[520px]">
                 No Image Available
               </div>
             )}
@@ -515,31 +540,33 @@ export default function PropertyDetails() {
           )}
         </motion.div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <main className="space-y-8 lg:col-span-2">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <main className="min-w-0 space-y-8">
             <motion.section
               variants={fadeUp}
               initial="hidden"
               animate="show"
-              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+              className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900 md:p-8"
             >
               <div className="flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                   👁 {property.views || 0} views
                 </span>
 
-                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-bold capitalize text-purple-700">
+                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-bold capitalize text-purple-700 dark:bg-purple-950 dark:text-purple-300">
                   {property.status || "approved"}
                 </span>
               </div>
 
-              <h1 className="mt-4 text-3xl font-black text-slate-900 md:text-5xl">
+              <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-white md:text-5xl">
                 {property.title}
               </h1>
 
-              <p className="mt-3 text-lg text-slate-600">📍 {getLocation()}</p>
+              <p className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+                📍 {getLocation()}
+              </p>
 
-              <p className="mt-6 text-4xl font-black text-purple-700 md:text-5xl">
+              <p className="mt-6 text-4xl font-black text-purple-700 dark:text-purple-300 md:text-5xl">
                 {formatPrice(property.price)}
               </p>
 
@@ -576,12 +603,13 @@ export default function PropertyDetails() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true }}
-              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+              className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900 md:p-8"
             >
-              <h2 className="text-3xl font-black text-slate-900">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white">
                 Property Description
               </h2>
-              <p className="mt-5 leading-8 text-slate-700">
+
+              <p className="mt-5 leading-8 text-slate-700 dark:text-slate-300">
                 {property.description || "No description provided."}
               </p>
             </motion.section>
@@ -591,9 +619,9 @@ export default function PropertyDetails() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true }}
-              className="rounded-[2rem] bg-white p-6 shadow-xl md:p-8"
+              className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900 md:p-8"
             >
-              <h2 className="mb-5 text-3xl font-black text-slate-900">
+              <h2 className="mb-5 text-3xl font-black text-slate-900 dark:text-white">
                 Location Map
               </h2>
 
@@ -604,18 +632,25 @@ export default function PropertyDetails() {
                 location={getLocation()}
               />
             </motion.section>
+
+            <AIPropertyAssistant property={property} />
+
+            <PropertyOfferBox property={property} />
           </main>
 
-          <aside className="space-y-6">
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <AIInvestmentScore property={property} />
+
             <AIPropertyValuation property={property} />
+
+            <WatchPropertyButton property={property} />
 
             {seller && (
               <motion.section
                 variants={fadeUp}
                 initial="hidden"
                 animate="show"
-                className="sticky top-24 rounded-[2rem] bg-white p-6 shadow-xl"
+                className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900"
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-purple-700 text-3xl font-black text-white">
@@ -623,13 +658,17 @@ export default function PropertyDetails() {
                   </div>
 
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900">
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white">
                       {getSellerName()}
                     </h2>
+
                     <p className="mt-1 font-bold text-yellow-600">
                       ⭐ {averageRating} / 5
                     </p>
-                    <p className="text-sm text-slate-500">{reviews.length} review(s)</p>
+
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {reviews.length} review(s)
+                    </p>
                   </div>
                 </div>
 
@@ -671,24 +710,63 @@ export default function PropertyDetails() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-2xl font-black text-slate-900">Send Enquiry</h2>
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900">
+            <h2 className="mb-4 text-2xl font-black text-slate-900 dark:text-white">
+              Send Enquiry
+            </h2>
 
-            {sent && <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">{sent}</div>}
+            {sent && (
+              <div className="mb-4 rounded-xl bg-blue-100 p-3 text-blue-700">
+                {sent}
+              </div>
+            )}
 
             <form onSubmit={submitEnquiry} className="space-y-4">
-              <input name="name" value={enquiry.name} onChange={handleChange} placeholder="Your name" className="w-full rounded-xl border p-3" required />
-              <input name="email" value={enquiry.email} onChange={handleChange} placeholder="Your email" type="email" className="w-full rounded-xl border p-3" required />
-              <input name="phone" value={enquiry.phone} onChange={handleChange} placeholder="Your phone number" className="w-full rounded-xl border p-3" required />
-              <textarea name="message" value={enquiry.message} onChange={handleChange} placeholder="Your message" className="h-32 w-full rounded-xl border p-3" required />
+              <input
+                name="name"
+                value={enquiry.name}
+                onChange={handleChange}
+                placeholder="Your name"
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
+              <input
+                name="email"
+                value={enquiry.email}
+                onChange={handleChange}
+                placeholder="Your email"
+                type="email"
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
+              <input
+                name="phone"
+                value={enquiry.phone}
+                onChange={handleChange}
+                placeholder="Your phone number"
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
+              <textarea
+                name="message"
+                value={enquiry.message}
+                onChange={handleChange}
+                placeholder="Your message"
+                className="h-32 w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
               <button className="w-full rounded-xl bg-slate-900 px-6 py-3 font-bold text-white hover:bg-slate-800">
                 Send Enquiry
               </button>
             </form>
           </section>
 
-          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-2xl font-black text-slate-900">
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900">
+            <h2 className="mb-4 text-2xl font-black text-slate-900 dark:text-white">
               Schedule Inspection
             </h2>
 
@@ -699,9 +777,35 @@ export default function PropertyDetails() {
             )}
 
             <form onSubmit={submitInspection} className="space-y-4">
-              <input type="text" name="name" value={inspection.name} onChange={handleInspectionChange} placeholder="Your name" className="w-full rounded-xl border p-3" required />
-              <input type="text" name="phone" value={inspection.phone} onChange={handleInspectionChange} placeholder="Your phone number" className="w-full rounded-xl border p-3" required />
-              <input type="datetime-local" name="inspection_date" value={inspection.inspection_date} onChange={handleInspectionChange} className="w-full rounded-xl border p-3" required />
+              <input
+                type="text"
+                name="name"
+                value={inspection.name}
+                onChange={handleInspectionChange}
+                placeholder="Your name"
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
+              <input
+                type="text"
+                name="phone"
+                value={inspection.phone}
+                onChange={handleInspectionChange}
+                placeholder="Your phone number"
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
+              <input
+                type="datetime-local"
+                name="inspection_date"
+                value={inspection.inspection_date}
+                onChange={handleInspectionChange}
+                className="w-full rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
+
               <button className="w-full rounded-xl bg-purple-700 px-4 py-3 font-bold text-white hover:bg-purple-800">
                 Schedule Inspection
               </button>
@@ -712,8 +816,8 @@ export default function PropertyDetails() {
         </div>
 
         {seller && (
-          <section className="rounded-[2rem] bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-2xl font-black text-slate-900">
+          <section className="rounded-[2rem] bg-white p-6 shadow-xl dark:bg-slate-900">
+            <h2 className="mb-4 text-2xl font-black text-slate-900 dark:text-white">
               Leave Seller Review
             </h2>
 
@@ -723,8 +827,17 @@ export default function PropertyDetails() {
               </div>
             )}
 
-            <form onSubmit={submitReview} className="grid gap-4 md:grid-cols-[220px_1fr_auto]">
-              <select name="rating" value={review.rating} onChange={handleReviewChange} className="rounded-xl border p-3" required>
+            <form
+              onSubmit={submitReview}
+              className="grid gap-4 md:grid-cols-[220px_1fr_auto]"
+            >
+              <select
+                name="rating"
+                value={review.rating}
+                onChange={handleReviewChange}
+                className="rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              >
                 <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
                 <option value="4">⭐⭐⭐⭐ 4 Stars</option>
                 <option value="3">⭐⭐⭐ 3 Stars</option>
@@ -732,7 +845,14 @@ export default function PropertyDetails() {
                 <option value="1">⭐ 1 Star</option>
               </select>
 
-              <textarea name="review" value={review.review} onChange={handleReviewChange} placeholder="Write your review..." className="h-20 rounded-xl border p-3" required />
+              <textarea
+                name="review"
+                value={review.review}
+                onChange={handleReviewChange}
+                placeholder="Write your review..."
+                className="h-20 rounded-xl border p-3 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                required
+              />
 
               <button className="rounded-xl bg-yellow-600 px-5 py-3 font-bold text-white hover:bg-yellow-700">
                 Submit
@@ -748,11 +868,19 @@ export default function PropertyDetails() {
                 className="mt-6 grid gap-4 md:grid-cols-3"
               >
                 {reviews.slice(0, 3).map((item) => (
-                  <motion.div key={item.id} variants={fadeUp} className="rounded-2xl bg-slate-50 p-4">
+                  <motion.div
+                    key={item.id}
+                    variants={fadeUp}
+                    className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-950"
+                  >
                     <p className="font-bold text-yellow-600">
                       {"⭐".repeat(Number(item.rating || 0))}
                     </p>
-                    <p className="mt-2 text-sm text-slate-700">{item.review}</p>
+
+                    <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                      {item.review}
+                    </p>
+
                     <p className="mt-2 text-xs text-slate-400">
                       {new Date(item.created_at).toLocaleDateString()}
                     </p>
@@ -765,10 +893,17 @@ export default function PropertyDetails() {
 
         {recommendedProperties.length > 0 && (
           <section>
-            <h2 className="mb-6 text-2xl font-black text-slate-900">
+            <h2 className="mb-6 text-2xl font-black text-slate-900 dark:text-white">
               🤖 Recommended For You
             </h2>
-            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
+
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid gap-6 md:grid-cols-3"
+            >
               {recommendedProperties.map((item) => (
                 <PropertyMiniCard key={item.id} item={item} />
               ))}
@@ -778,10 +913,17 @@ export default function PropertyDetails() {
 
         {nearbyProperties.length > 0 && (
           <section>
-            <h2 className="mb-6 text-2xl font-black text-slate-900">
+            <h2 className="mb-6 text-2xl font-black text-slate-900 dark:text-white">
               🏘 Nearby Properties
             </h2>
-            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
+
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid gap-6 md:grid-cols-3"
+            >
               {nearbyProperties.map((item) => (
                 <PropertyMiniCard key={item.id} item={item} />
               ))}
@@ -791,10 +933,17 @@ export default function PropertyDetails() {
 
         {similarProperties.length > 0 && (
           <section>
-            <h2 className="mb-6 text-2xl font-black text-slate-900">
+            <h2 className="mb-6 text-2xl font-black text-slate-900 dark:text-white">
               ✨ Similar Properties You May Like
             </h2>
-            <motion.div variants={stagger} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid gap-6 md:grid-cols-3">
+
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true }}
+              className="grid gap-6 md:grid-cols-3"
+            >
               {similarProperties.map((item) => (
                 <PropertyMiniCard key={item.id} item={item} />
               ))}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -48,8 +48,10 @@ function SkeletonNotification() {
 }
 
 export default function NotificationsCenter() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const channelRef = useRef(null);
+    const hasSubscribedRef = useRef(false);
 
   async function loadNotifications() {
     setLoading(true);
@@ -117,44 +119,57 @@ export default function NotificationsCenter() {
   }
 
   useEffect(() => {
-    let isMounted = true;
+  let mounted = true;
 
-    async function fetchNotifications() {
-      setLoading(true);
+  async function initialize() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || !isMounted) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (isMounted) {
-        if (error) {
-          toast.error(error.message);
-          setNotifications([]);
-        } else {
-          setNotifications(data || []);
-        }
-
-        setLoading(false);
-      }
+    if (!user || !mounted) {
+      setLoading(false);
+      return;
     }
 
-    fetchNotifications();
+    await loadNotifications();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    if (hasSubscribedRef.current) return;
+
+    hasSubscribedRef.current = true;
+
+    const channel = supabase
+      .channel(`notifications-live-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          toast.success(payload.new.title || "New notification");
+          setNotifications((prev) => [payload.new, ...prev]);
+        }
+      );
+
+    channelRef.current = channel;
+
+    channel.subscribe();
+  }
+
+  initialize();
+
+  return () => {
+    mounted = false;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+      hasSubscribedRef.current = false;
+    }
+  };
+}, []);
 
   const unreadCount = notifications.filter((item) => !item.is_read).length;
   const readCount = notifications.length - unreadCount;

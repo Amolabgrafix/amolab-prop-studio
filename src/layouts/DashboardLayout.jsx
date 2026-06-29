@@ -31,27 +31,11 @@ function SidebarContent({
       </div>
 
       <nav className="space-y-6 px-4 pb-8">
-        <SidebarGroup
-          title="Main"
-          links={userLinks}
-          linkClass={linkClass}
-          setMobileOpen={setMobileOpen}
-        />
-
-        <SidebarGroup
-          title="Seller Tools"
-          links={sellerLinks}
-          linkClass={linkClass}
-          setMobileOpen={setMobileOpen}
-        />
+        <SidebarGroup title="Main" links={userLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
+        <SidebarGroup title="Seller Tools" links={sellerLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
 
         {role === "admin" && (
-          <SidebarGroup
-            title="Admin Tools"
-            links={adminLinks}
-            linkClass={linkClass}
-            setMobileOpen={setMobileOpen}
-          />
+          <SidebarGroup title="Admin Tools" links={adminLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
         )}
       </nav>
     </>
@@ -73,9 +57,7 @@ function SidebarGroup({ title, links, linkClass, setMobileOpen }) {
             onClick={() => setMobileOpen(false)}
             className={linkClass(item.to)}
           >
-            <span>
-              {item.icon} {item.label}
-            </span>
+            <span>{item.icon} {item.label}</span>
 
             {item.badge > 0 && (
               <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-black text-white">
@@ -155,10 +137,7 @@ export default function DashboardLayout() {
 
     return () => {
       isMounted = false;
-
-      if (notificationsChannel) {
-        supabase.removeChannel(notificationsChannel);
-      }
+      if (notificationsChannel) supabase.removeChannel(notificationsChannel);
     };
   }, [navigate]);
 
@@ -182,39 +161,15 @@ export default function DashboardLayout() {
     }`;
   }
 
- const userLinks = [
+const userLinks = [
   { to: "/dashboard", label: "Dashboard Home", icon: "🏠" },
-
-  {
-    to: "/dashboard/notifications",
-    label: "Notifications",
-    icon: "🔔",
-    badge: unreadCount,
-  },
-
-  {
-    to: "/dashboard/saved-searches",
-    label: "Saved Searches",
-    icon: "🔍",
-  },
-
-  {
-    to: "/dashboard/property-alerts",
-    label: "Property Alerts",
-    icon: "🚨",
-  },
-
-  {
-    to: "/dashboard/favorites",
-    label: "My Favorites",
-    icon: "❤️",
-  },
-
-  {
-    to: "/dashboard/recently-viewed",
-    label: "Recently Viewed",
-    icon: "👁",
-  },
+  { to: "/dashboard/notifications", label: "Notifications", icon: "🔔", badge: unreadCount },
+  { to: "/dashboard/my-offers", label: "💼 My Offers", icon: "💼" },
+  { to: "/dashboard/watched-properties", label: "❤️ Watched Properties", icon: "❤️" },
+  { to: "/dashboard/saved-searches", label: "Saved Searches", icon: "🔍" },
+  { to: "/dashboard/property-alerts", label: "Property Alerts", icon: "🚨" },
+  { to: "/dashboard/favorites", label: "Favorites", icon: "❤️" },
+  { to: "/dashboard/recently-viewed", label: "Recently Viewed", icon: "👁" },
 ];
 
   const sellerLinks = [
@@ -223,6 +178,7 @@ export default function DashboardLayout() {
     { to: "/dashboard/seller/add-property", label: "Add Property", icon: "➕" },
     { to: "/dashboard/seller/verification", label: "Verification", icon: "🛡" },
     { to: "/dashboard/seller/enquiries", label: "My Enquiries", icon: "💬" },
+    { to: "/dashboard/seller/offers", label: "Offers Received", icon: "💰" },
     { to: "/dashboard/seller/payments", label: "Payment History", icon: "💳" },
     { to: "/dashboard/seller/subscription", label: "Subscription", icon: "💎" },
     { to: "/dashboard/seller/analytics", label: "Analytics", icon: "📈" },
@@ -280,10 +236,7 @@ export default function DashboardLayout() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 md:hidden"
           >
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
+            <button onClick={() => setMobileOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
             <motion.aside
               initial={{ x: -340 }}
