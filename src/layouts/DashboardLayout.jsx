@@ -31,11 +31,27 @@ function SidebarContent({
       </div>
 
       <nav className="space-y-6 px-4 pb-8">
-        <SidebarGroup title="Main" links={userLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
-        <SidebarGroup title="Seller Tools" links={sellerLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
+        <SidebarGroup
+          title="Main"
+          links={userLinks}
+          linkClass={linkClass}
+          setMobileOpen={setMobileOpen}
+        />
+
+        <SidebarGroup
+          title="Seller Tools"
+          links={sellerLinks}
+          linkClass={linkClass}
+          setMobileOpen={setMobileOpen}
+        />
 
         {role === "admin" && (
-          <SidebarGroup title="Admin Tools" links={adminLinks} linkClass={linkClass} setMobileOpen={setMobileOpen} />
+          <SidebarGroup
+            title="Admin Tools"
+            links={adminLinks}
+            linkClass={linkClass}
+            setMobileOpen={setMobileOpen}
+          />
         )}
       </nav>
     </>
@@ -57,7 +73,9 @@ function SidebarGroup({ title, links, linkClass, setMobileOpen }) {
             onClick={() => setMobileOpen(false)}
             className={linkClass(item.to)}
           >
-            <span>{item.icon} {item.label}</span>
+            <span>
+              {item.icon} {item.label}
+            </span>
 
             {item.badge > 0 && (
               <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-black text-white">
@@ -161,36 +179,71 @@ export default function DashboardLayout() {
     }`;
   }
 
-const userLinks = [
-  { to: "/dashboard", label: "Dashboard Home", icon: "🏠" },
-  { to: "/dashboard/notifications", label: "Notifications", icon: "🔔", badge: unreadCount },
-  { to: "/dashboard/my-offers", label: "💼 My Offers", icon: "💼" },
-  { to: "/dashboard/watched-properties", label: "❤️ Watched Properties", icon: "❤️" },
-  { to: "/dashboard/saved-searches", label: "Saved Searches", icon: "🔍" },
-  { to: "/dashboard/property-alerts", label: "Property Alerts", icon: "🚨" },
-  { to: "/dashboard/favorites", label: "Favorites", icon: "❤️" },
-  { to: "/dashboard/recently-viewed", label: "Recently Viewed", icon: "👁" },
-];
+  const userLinks = [
+    { to: "/dashboard", label: "Dashboard Home", icon: "🏠" },
+    {
+      to: "/dashboard/notifications",
+      label: "Notifications",
+      icon: "🔔",
+      badge: unreadCount,
+    },
+    { to: "/dashboard/my-offers", label: "My Offers", icon: "💼" },
+    {
+      to: "/dashboard/buyer-preferences",
+      label: "AI Buyer Match",
+      icon: "🤖",
+    },
+    {
+      to: "/dashboard/design-request",
+      label: "Request Design",
+      icon: "🎨",
+    },
+    {
+      to: "/dashboard/watched-properties",
+      label: "Watched Properties",
+      icon: "❤️",
+    },
+    { to: "/dashboard/saved-searches", label: "Saved Searches", icon: "🔍" },
+    { to: "/dashboard/property-alerts", label: "Property Alerts", icon: "🚨" },
+    { to: "/dashboard/favorites", label: "Favorites", icon: "❤️" },
+    { to: "/dashboard/recently-viewed", label: "Recently Viewed", icon: "👁" },
+  ];
 
   const sellerLinks = [
     { to: "/dashboard/seller", label: "Seller Dashboard", icon: "📊" },
     { to: "/dashboard/seller/properties", label: "My Properties", icon: "🏘" },
     { to: "/dashboard/seller/add-property", label: "Add Property", icon: "➕" },
-    { to: "/dashboard/seller/verification", label: "Verification", icon: "🛡" },
+    {
+      to: "/dashboard/seller/verification",
+      label: "Verification",
+      icon: "🛡",
+    },
     { to: "/dashboard/seller/enquiries", label: "My Enquiries", icon: "💬" },
     { to: "/dashboard/seller/offers", label: "Offers Received", icon: "💰" },
     { to: "/dashboard/seller/payments", label: "Payment History", icon: "💳" },
     { to: "/dashboard/seller/subscription", label: "Subscription", icon: "💎" },
     { to: "/dashboard/seller/analytics", label: "Analytics", icon: "📈" },
-    { to: "/dashboard/seller/inspections", label: "Inspection Requests", icon: "📅" },
+    {
+      to: "/dashboard/seller/inspections",
+      label: "Inspection Requests",
+      icon: "📅",
+    },
   ];
 
   const adminLinks = [
     { to: "/dashboard/admin", label: "Admin Dashboard", icon: "⚙️" },
     { to: "/dashboard/admin/users", label: "Users", icon: "👥" },
     { to: "/dashboard/admin/properties", label: "Properties", icon: "🏢" },
-    { to: "/dashboard/admin/verifications", label: "Verifications", icon: "✅" },
-    { to: "/dashboard/admin/design-requests", label: "Design Requests", icon: "🎨" },
+    {
+      to: "/dashboard/admin/verifications",
+      label: "Verifications",
+      icon: "✅",
+    },
+    {
+      to: "/dashboard/admin/design-requests",
+      label: "Design Requests",
+      icon: "🎨",
+    },
     { to: "/dashboard/admin/payments", label: "Payments", icon: "💰" },
     { to: "/dashboard/admin/enquiries", label: "Enquiries", icon: "📩" },
     { to: "/dashboard/admin/revenue", label: "Revenue", icon: "📈" },
@@ -216,6 +269,7 @@ const userLinks = [
       <aside className="fixed left-0 top-0 hidden h-screen w-72 overflow-y-auto bg-slate-950 text-white md:block">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(168,85,247,0.28),transparent_35%)]" />
         <div className="absolute bottom-0 right-0 h-60 w-60 rounded-full bg-purple-700/20 blur-3xl" />
+
         <div className="relative z-10">
           <SidebarContent
             role={role}
@@ -236,7 +290,10 @@ const userLinks = [
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 md:hidden"
           >
-            <button onClick={() => setMobileOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
 
             <motion.aside
               initial={{ x: -340 }}

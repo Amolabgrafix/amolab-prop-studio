@@ -20,6 +20,8 @@ import NotificationsCenter from "./dashboard/NotificationsCenter";
 import PropertyAlerts from "./dashboard/PropertyAlerts";
 import SavedSearches from "./dashboard/SavedSearches";
 import MyOffers from "./dashboard/MyOffers";
+import BuyerPreferences from "./dashboard/BuyerPreferences";
+import DesignRequest from "./dashboard/DesignRequest";
 
 import AdminDashboard from "./dashboard/admin/AdminDashboard";
 import AdminUsers from "./dashboard/admin/AdminUsers";
@@ -47,8 +49,6 @@ import WatchedProperties from "./dashboard/WatchedProperties";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import { CompareProvider } from "./components/CompareContext";
 import FloatingCompare from "./components/FloatingCompare";
-
-
 
 function ThemeController() {
   const [theme, setTheme] = useState(() => {
@@ -165,12 +165,13 @@ function AnimatedRoutes() {
           <Route index element={<DashboardHome />} />
           <Route path="favorites" element={<Favorites />} />
           <Route path="my-offers" element={<MyOffers />} />
+          <Route path="buyer-preferences" element={<BuyerPreferences />} />
+          <Route path="design-request" element={<DesignRequest />} />
           <Route path="watched-properties" element={<WatchedProperties />} />
           <Route path="recently-viewed" element={<RecentlyViewed />} />
           <Route path="notifications" element={<NotificationsCenter />} />
           <Route path="property-alerts" element={<PropertyAlerts />} />
           <Route path="saved-searches" element={<SavedSearches />} />
-          
 
           <Route path="seller" element={<SellerDashboard />} />
           <Route path="seller/properties" element={<SellerProperties />} />

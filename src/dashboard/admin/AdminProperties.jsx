@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { supabase } from "../../lib/supabase";
+import { notifyMatchingBuyersForProperty } from "../../lib/aiNotificationEngine";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -19,13 +20,7 @@ function formatPrice(price) {
 }
 
 function getLocation(property) {
-  return (
-    property.city ||
-    property.location ||
-    property.address ||
-    property.state ||
-    "N/A"
-  );
+  return property.city || property.location || property.address || property.state || "N/A";
 }
 
 function getType(property) {
@@ -104,7 +99,18 @@ export default function AdminProperties() {
       setMessage(warning);
       toast.error(warning);
     } else {
-      const success = `Property marked as ${data[0].status}.`;
+      let success = `Property marked as ${data[0].status}.`;
+
+      if (status === "approved") {
+        const aiResult = await notifyMatchingBuyersForProperty(id);
+
+        if (aiResult.success) {
+          success += ` AI notified ${aiResult.notified} matching buyer(s).`;
+        } else {
+          success += ` AI notification skipped: ${aiResult.message}`;
+        }
+      }
+
       setMessage(success);
       toast.success(success);
       await loadProperties();
@@ -504,9 +510,7 @@ export default function AdminProperties() {
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() =>
-                              toggleFeatured(property.id, property.is_featured)
-                            }
+                            onClick={() => toggleFeatured(property.id, property.is_featured)}
                             className={`rounded-xl px-3 py-2 text-sm font-bold text-white disabled:opacity-50 ${
                               property.is_featured
                                 ? "bg-slate-700 hover:bg-slate-800"

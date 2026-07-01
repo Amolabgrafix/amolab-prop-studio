@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import SellerInterestedBuyers from "../../components/SellerInterestedBuyers";
 
 export default function SellerAnalytics() {
   const [properties, setProperties] = useState([]);
@@ -72,12 +73,13 @@ export default function SellerAnalytics() {
 
   return (
     <div>
-      <h1 className="mb-2 text-3xl font-bold text-slate-900">
+      <h1 className="mb-2 text-3xl font-bold text-slate-900 dark:text-white">
         Property Analytics
       </h1>
 
-      <p className="mb-8 text-slate-600">
-        Track views, enquiries and performance for your uploaded properties.
+      <p className="mb-8 text-slate-600 dark:text-slate-300">
+        Track views, enquiries, performance, and AI buyer interest for your
+        uploaded properties.
       </p>
 
       <div className="mb-8 grid gap-4 md:grid-cols-6">
@@ -89,22 +91,24 @@ export default function SellerAnalytics() {
         <AnalyticsCard title="Featured" value={stats.featured} />
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow">
-        <h2 className="mb-1 text-xl font-bold text-slate-900">
+      <div className="rounded-2xl bg-white p-6 shadow dark:bg-slate-900">
+        <h2 className="mb-1 text-xl font-bold text-slate-900 dark:text-white">
           Top Performing Properties
         </h2>
 
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
           Showing your top 10 properties ranked by views.
         </p>
 
         {properties.length === 0 ? (
-          <p className="text-slate-500">No properties found.</p>
+          <p className="text-slate-500 dark:text-slate-400">
+            No properties found.
+          </p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b bg-slate-50">
+                <tr className="border-b bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
                   <th className="p-3">Property</th>
                   <th className="p-3">Status</th>
                   <th className="p-3">Views</th>
@@ -116,24 +120,18 @@ export default function SellerAnalytics() {
 
               <tbody>
                 {properties.map((property) => (
-                  <tr key={property.id} className="border-b">
+                  <tr
+                    key={property.id}
+                    className="border-b dark:border-slate-800"
+                  >
                     <td className="p-3 font-semibold">{property.title}</td>
-
                     <td className="p-3 capitalize">{property.status}</td>
-
                     <td className="p-3">
                       {Number(property.views || 0).toLocaleString()}
                     </td>
-
                     <td className="p-3">{property.enquiries?.length || 0}</td>
-
-                    <td className="p-3">
-                      {property.is_boosted ? "Yes" : "No"}
-                    </td>
-
-                    <td className="p-3">
-                      {property.is_featured ? "Yes" : "No"}
-                    </td>
+                    <td className="p-3">{property.is_boosted ? "Yes" : "No"}</td>
+                    <td className="p-3">{property.is_featured ? "Yes" : "No"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -141,15 +139,17 @@ export default function SellerAnalytics() {
           </div>
         )}
       </div>
+
+      <SellerInterestedBuyers />
     </div>
   );
 }
 
 function AnalyticsCard({ title, value }) {
   return (
-    <div className="rounded-2xl bg-white p-5 shadow">
-      <p className="text-sm text-slate-500">{title}</p>
-      <h2 className="mt-2 text-3xl font-bold text-purple-700">
+    <div className="rounded-2xl bg-white p-5 shadow dark:bg-slate-900">
+      <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
+      <h2 className="mt-2 text-3xl font-bold text-purple-700 dark:text-purple-300">
         {Number(value || 0).toLocaleString()}
       </h2>
     </div>
